@@ -31,27 +31,15 @@
     <!-- SİPARİŞLER -->
     <section id="tab-siparis" class="tab">
       <h2 class="h">Siparişlerim</h2>
+      <div class="authbar"></div>
       <div id="orders"></div>
     </section>
 
     <!-- İŞLETME -->
     <section id="tab-isletme" class="tab">
       <h2 class="h">İşletme paneli</h2>
-      <label class="lbl">İşletme
-        <select id="bizSel"></select>
-      </label>
-      <form id="bagForm" class="form">
-        <h3>Yeni sürpriz paket ekle</h3>
-        <input name="title" required placeholder="Paket adı (örn. Akşam Yemeği Paketi)">
-        <input name="desc" placeholder="Kısa açıklama / alerjen bilgisi">
-        <div class="row"><input name="orig" type="number" min="1" required placeholder="Normal fiyat ₺"><input name="price" type="number" min="1" required placeholder="İndirimli ₺"></div>
-        <div class="row"><input name="qty" type="number" min="1" max="50" required placeholder="Adet"><input name="from" type="time" required value="21:00"><input name="to" type="time" required value="22:00"></div>
-        <button class="btn">Yayınla</button>
-      </form>
-      <h3 class="sub">Aktif paketler</h3>
-      <div id="bizBags"></div>
-      <h3 class="sub">Gelen siparişler</h3>
-      <div id="bizOrders"></div>
+      <div class="authbar"></div>
+      <div id="bizRoot"></div>
     </section>
   </main>
 
@@ -68,6 +56,7 @@
   <div id="toast"></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
