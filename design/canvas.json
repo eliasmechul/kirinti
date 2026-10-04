@@ -1,0 +1,20 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Detay.dc.html": { "h": 844, "is_interactive": true, "title": "Uygulama · Paket detayı", "w": 390, "x": 2300, "y": 0 },
+    "Harita.dc.html": { "h": 844, "is_interactive": true, "title": "Uygulama · Gözat (harita)", "w": 390, "x": 1830, "y": 0 },
+    "Kesfet.dc.html": { "h": 844, "is_interactive": true, "title": "Uygulama · Keşfet", "w": 390, "x": 1360, "y": 0 },
+    "Kod.dc.html": { "h": 844, "title": "Uygulama · Teslim al", "w": 390, "x": 2770, "y": 0 },
+    "Main.dc.html": { "expand": "fill", "h": 4300, "title": "Web sitesi · ana sayfa", "w": 1280, "x": 0, "y": 0 }
+  },
+  "createdOnFiles": { "at": "2026-10-04T15:00:00Z", "v": 1 },
+  "designSystems": [],
+  "launch": { "view": "canvas" },
+  "notes": {
+    "n1": { "kind": "title1", "maxW": 1800, "text": "Kırıntı uygulaması", "w": 240, "x": 1360, "y": -300 }
+  },
+  "order": ["Main.dc.html", "Kesfet.dc.html", "Harita.dc.html", "Detay.dc.html", "Kod.dc.html"],
+  "pages": [],
+  "title": "Kırıntı Tasarım"
+}
