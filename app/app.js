@@ -15,22 +15,32 @@ const km = ([a, b], [c, d]) => {
 };
 
 let user = null, bags = [], myOrders = [], myBiz = null;
-let filter = 'hepsi', me = [40.9908, 29.0290];
+let filter = 'hepsi', query = '', view = 'list', me = [40.9908, 29.0290];
+let favs = [];
+try { favs = JSON.parse(localStorage.getItem('kirinti_fav') || '[]'); } catch {}
+const saveFavs = () => { try { localStorage.setItem('kirinti_fav', JSON.stringify(favs)); } catch {} };
+
+// ---------- Görsel yardımcılar ----------
+const hue = s => [...s].reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
+const coverStyle = b => `background:linear-gradient(135deg,hsl(${hue(b.name)} 45% 38%),hsl(${(hue(b.name) + 40) % 360} 50% 22%))`;
+const emoji = p => /pasta|kurabiye|tatlı|baklava/i.test(p.title) ? '🍰' : /pide|lahmacun/i.test(p.title) ? '🥙' : /meze/i.test(p.title) ? '🥗' : /brunch|kahvaltı|sandviç/i.test(p.title) ? '🥐' : p.businesses.type === 'kafe' ? '☕' : '🍲';
+const initial = b => esc(b.name.trim()[0] || '?');
 
 // ---------- Harita ----------
 const map = L.map('map', { zoomControl: false }).setView(me, 14);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
-L.circleMarker(me, { radius: 8, color: '#fff', weight: 3, fillColor: '#2f7cff', fillOpacity: 1 }).addTo(map);
+let meMarker = L.circleMarker(me, { radius: 8, color: '#fff', weight: 3, fillColor: '#2f7cff', fillOpacity: 1 }).addTo(map);
 const layer = L.layerGroup().addTo(map);
 if (navigator.geolocation) navigator.geolocation.getCurrentPosition(p => {
-  me = [p.coords.latitude, p.coords.longitude]; map.setView(me, 14); $('#locName').textContent = 'Konumun'; renderBags();
+  me = [p.coords.latitude, p.coords.longitude]; map.setView(me, 14); meMarker.setLatLng(me);
+  $('#locName').textContent = 'Konumun'; render();
 }, () => {}, { timeout: 4000 });
 
 // ---------- Veri ----------
 async function loadBags() {
   const { data, error } = await sb.from('bags').select('*, businesses(*)').eq('pickup_date', todayTR());
   if (error) return toast('Paketler yüklenemedi');
-  bags = data; renderBags();
+  bags = data; render();
 }
 async function loadMyOrders() {
   if (!user) { myOrders = []; return renderOrders(); }
@@ -44,17 +54,45 @@ async function loadMyBiz() {
 }
 
 const isOpen = p => nowTR() >= hm(p.pickup_from) && nowTR() <= hm(p.pickup_to);
+const ended = p => nowTR() > hm(p.pickup_to);
+const dist = p => km(me, [p.businesses.lat, p.businesses.lng]);
 function visible() {
+  const q = query.trim().toLocaleLowerCase('tr');
   return bags.filter(p => {
     const t = p.businesses.type;
+    if (q && !(p.businesses.name + ' ' + p.title).toLocaleLowerCase('tr').includes(q)) return false;
     if (filter === 'restoran' || filter === 'kafe') return t === filter;
     if (filter === 'simdi') return isOpen(p) && p.qty_available > 0;
     return true;
-  }).sort((a, b) => km(me, [a.businesses.lat, a.businesses.lng]) - km(me, [b.businesses.lat, b.businesses.lng]));
+  }).sort((a, b) => dist(a) - dist(b));
 }
 
-function renderBags() {
+// ---------- Kartlar ----------
+function card(p) {
+  const b = p.businesses, fav = favs.includes(b.id);
+  return `<div class="card2" data-id="${p.id}">
+    <div class="cover" style="${coverStyle(b)}">${emoji(p)}
+      <span class="tagq ${p.qty_available ? '' : 'out'}">${p.qty_available ? p.qty_available + ' kaldı' : 'Tükendi'}</span>
+      <button class="heart" data-fav="${b.id}" aria-label="Favori">${fav ? '❤️' : '🤍'}</button>
+      <div class="logo-c">${initial(b)}</div></div>
+    <div class="body"><b>${esc(b.name)}</b><span class="t">${esc(p.title)}</span>
+      <span class="pick">Bugün ${hm(p.pickup_from)}–${hm(p.pickup_to)}</span>
+      <div class="row2"><span class="price"><s>${p.original_price} ₺</s>${p.price} ₺</span><span class="dist">${dist(p).toFixed(1)} km</span></div></div></div>`;
+}
+const rail = (title, sub, list) => list.length ? `<div class="sec-h"><h3>${title}</h3><span>${sub}</span></div><div class="rail">${list.map(card).join('')}</div>` : '';
+
+function render() {
   const list = visible();
+  // Ana liste
+  const open = list.filter(p => p.qty_available > 0 && !ended(p));
+  const lastCall = [...open].sort((a, b) => hm(a.pickup_to).localeCompare(hm(b.pickup_to))).slice(0, 6);
+  const html = rail('⏳ Son fırsat', 'yakında bitiyor', lastCall)
+    + rail('📍 Yakınında', 'en yakından uzağa', open.slice(0, 8))
+    + rail('🍽️ Restoranlar', '', open.filter(p => p.businesses.type === 'restoran'))
+    + rail('☕ Kafeler', '', open.filter(p => p.businesses.type === 'kafe'))
+    + rail('Tükenenler', 'yarın tekrar bak', list.filter(p => p.qty_available === 0));
+  $('#home').innerHTML = html || '<p class="empty">Aramana uygun paket bulunamadı.</p>';
+  // Harita
   layer.clearLayers();
   list.forEach(p => {
     const b = p.businesses;
@@ -62,27 +100,26 @@ function renderBags() {
       html: `<div class="pin ${b.type} ${p.qty_available ? '' : 'out'}" style="width:38px;height:38px"><span>${p.qty_available}</span></div>` });
     L.marker([b.lat, b.lng], { icon }).addTo(layer).on('click', () => openBag(p.id));
   });
-  $('#list').innerHTML = list.length ? list.map(p => {
-    const b = p.businesses;
-    return `<div class="item ${b.type}" data-id="${p.id}">
-      <span class="badge ${p.qty_available ? '' : 'out'}">${p.qty_available ? p.qty_available + ' paket kaldı' : 'Tükendi'}</span>
-      <b>${esc(b.name)}</b><span>${esc(p.title)}</span>
-      <div class="pr"><strong>${p.price} ₺</strong><s>${p.original_price} ₺</s></div>
-      <small>Bugün ${hm(p.pickup_from)}–${hm(p.pickup_to)} · ${km(me, [b.lat, b.lng]).toFixed(1)} km</small></div>`;
-  }).join('') : '<p class="muted">Bu filtrede paket yok.</p>';
+  renderFavs();
 }
 
-// ---------- Sheet ----------
+function renderFavs() {
+  const list = bags.filter(p => favs.includes(p.businesses.id));
+  $('#favs').innerHTML = list.length ? list.map(card).join('') : '<p class="empty">Henüz favorin yok. Kalbe dokunarak mekânları buraya ekle.</p>';
+}
+
+// ---------- Sheet / sayfa ----------
 function sheet(html) { $('#sheetBody').innerHTML = html; $('#sheet').hidden = false; }
 const closeSheet = () => { $('#sheet').hidden = true; };
 $('.sheet-bg').onclick = closeSheet;
+const closePage = () => { $('#page').hidden = true; };
 
 // ---------- Giriş ----------
 function authSheet(msg) {
   sheet(`<h3>Giriş yap / Kayıt ol</h3>${msg ? `<p class="muted">${esc(msg)}</p>` : ''}
     <form class="form" id="authForm"><input name="email" type="email" required placeholder="E-posta" autocomplete="email">
     <input name="password" type="password" required minlength="6" placeholder="Şifre (en az 6 karakter)" autocomplete="current-password">
-    <button class="btn" data-mode="in">Giriş yap</button>
+    <button class="btn">Giriş yap</button>
     <button class="btn sec" type="button" id="signup">Kayıt ol</button></form>
     <button class="btn sec" id="x">Kapat</button>`);
   $('#x').onclick = closeSheet;
@@ -97,7 +134,7 @@ function authSheet(msg) {
     if (!$('#authForm').reportValidity()) return;
     const { data, error } = await sb.auth.signUp(creds());
     if (error) return toast(error.message);
-    if (!data.session) { toast('Kayıt tamam. E-postanı doğrula.'); } else { closeSheet(); toast('Hoş geldin!'); }
+    if (!data.session) toast('Kayıt tamam. E-postanı doğrula.'); else { closeSheet(); toast('Hoş geldin!'); }
   };
 }
 function renderAuthBars() {
@@ -108,44 +145,83 @@ function renderAuthBars() {
   });
 }
 document.addEventListener('click', async e => {
-  if (e.target.matches('[data-in]')) authSheet();
-  if (e.target.matches('[data-out]')) { e.preventDefault(); await sb.auth.signOut(); }
+  const t = e.target;
+  if (t.matches('[data-in]')) authSheet();
+  if (t.matches('[data-out]')) { e.preventDefault(); await sb.auth.signOut(); }
+  const fav = t.closest('[data-fav]');
+  if (fav) { e.stopPropagation(); toggleFav(fav.dataset.fav); }
 });
 sb.auth.onAuthStateChange((_ev, session) => {
   user = session?.user || null;
   renderAuthBars();
   setTimeout(() => { loadMyOrders(); loadMyBiz(); }, 0);
 });
+function toggleFav(id) {
+  favs = favs.includes(id) ? favs.filter(x => x !== id) : [...favs, id];
+  saveFavs(); render();
+  const pg = $('#page'); if (!pg.hidden) { const h = pg.querySelector('.heart'); if (h) h.textContent = favs.includes(id) ? '❤️' : '🤍'; }
+}
 
-// ---------- Paket detay / rezervasyon ----------
+// ---------- Paket detay sayfası ----------
 function openBag(id) {
   const p = bags.find(x => x.id === id), b = p.businesses;
   let q = 1;
   const draw = () => {
-    sheet(`<span class="badge ${p.qty_available ? '' : 'out'}">${p.qty_available ? p.qty_available + ' paket kaldı' : 'Tükendi'}</span>
-      <h3>${esc(b.name)}</h3><p class="muted">${b.type === 'kafe' ? '☕ Kafe' : '🍽️ Restoran'} · ${esc(b.address)}</p>
-      <b>${esc(p.title)}</b><p class="muted">${esc(p.description)}</p>
-      <p>⏰ Teslim: <b>Bugün ${hm(p.pickup_from)}–${hm(p.pickup_to)}</b></p>
-      <p><b style="color:var(--tomato);font-size:1.4rem">${p.price} ₺</b> <s class="muted">${p.original_price} ₺</s></p>
-      ${p.qty_available ? `<div class="qty"><button id="m">−</button><span>${q}</span><button id="pl">+</button></div>
-      <button class="btn" id="buy">${(p.price * q).toFixed(0)} ₺ öde ve ayır</button>` : ''}
-      <p class="muted">Paketin içeriği sürprizdir. Ödeme şimdilik simüle edilir.</p>
-      <button class="btn sec" id="x">Kapat</button>`);
-    $('#x').onclick = closeSheet;
+    const pg = $('#page'); pg.hidden = false;
+    pg.innerHTML = `<div class="cover" style="${coverStyle(b)}">${emoji(p)}
+        <button class="back" id="back">←</button>
+        <button class="heart" data-fav="${b.id}">${favs.includes(b.id) ? '❤️' : '🤍'}</button>
+        <div class="logo-c">${initial(b)}</div></div>
+      <div class="pbody">
+        <h2>${esc(b.name)}</h2>
+        <p class="muted">${b.type === 'kafe' ? '☕ Kafe' : '🍽️ Restoran'} · ${esc(b.address)} · ${dist(p).toFixed(1)} km</p>
+        <div class="info"><b>${esc(p.title)}</b>
+          <div class="pbig">${p.price} ₺<s>${p.original_price} ₺</s></div>
+          <span>⏰ Bugün <b>${hm(p.pickup_from)}–${hm(p.pickup_to)}</b> arası teslim</span>
+          <span>${p.qty_available ? `🛍️ ${p.qty_available} paket kaldı` : '❌ Tükendi'}</span></div>
+        <div class="info"><b>Pakette ne olabilir?</b><span>${esc(p.description) || 'Mekânın gün sonu sürpriz yemekleri.'}</span>
+          <span class="muted">Paketin içeriği sürprizdir. Alerjen durumun varsa mekânla paket almadan önce iletişime geç.</span></div>
+        <div class="info"><b>Nasıl çalışır?</b><span>1. Ayır ve öde · 2. Teslim saatinde mekâna git · 3. Kodunu göster</span></div>
+      </div>
+      <div class="cta">${p.qty_available ? `<div class="qty"><button id="m">−</button><span>${q}</span><button id="pl">+</button></div>
+        <button class="btn" id="buy">Ayır · ${(p.price * q).toFixed(0)} ₺</button>` : '<button class="btn" disabled>Tükendi</button>'}</div>`;
+    $('#back').onclick = closePage;
     if (p.qty_available) {
       $('#m').onclick = () => { q = Math.max(1, q - 1); draw(); };
       $('#pl').onclick = () => { q = Math.min(p.qty_available, 3, q + 1); draw(); };
-      $('#buy').onclick = () => reserve(p, q);
+      $('#buy').onclick = () => confirmSheet(p, q);
     }
   };
   draw();
 }
 
-async function reserve(p, q) {
+// Kaydırarak onayla (TGTG tarzı)
+function confirmSheet(p, q) {
   if (!user) return authSheet('Paket ayırmak için giriş yapmalısın.');
+  sheet(`<h3>Siparişi onayla</h3>
+    <p><b>${q}× ${esc(p.title)}</b><br><span class="muted">${esc(p.businesses.name)} · Bugün ${hm(p.pickup_from)}–${hm(p.pickup_to)}</span></p>
+    <p class="pbig">${(p.price * q).toFixed(0)} ₺</p>
+    <p class="muted">Ödeme şimdilik simüle edilir; gerçek kart tahsilatı yapılmaz.</p>
+    <div class="swipe" id="sw"><div class="thumb" id="th">➜</div><span>Kaydırarak onayla</span></div>
+    <button class="btn sec" id="x">Vazgeç</button>`);
+  $('#x').onclick = closeSheet;
+  const sw = $('#sw'), th = $('#th');
+  let drag = false, x0 = 0, done = false;
+  const max = () => sw.clientWidth - th.clientWidth - 8;
+  th.onpointerdown = e => { drag = true; x0 = e.clientX; th.setPointerCapture(e.pointerId); };
+  th.onpointermove = e => { if (!drag) return; th.style.left = 4 + Math.min(max(), Math.max(0, e.clientX - x0)) + 'px'; };
+  th.onpointerup = async () => {
+    if (!drag) return; drag = false;
+    if (!done && parseFloat(th.style.left) - 4 > max() * 0.85) { done = true; await reserve(p, q); }
+    else th.style.left = '4px';
+  };
+}
+
+async function reserve(p, q) {
   const { data: o, error } = await sb.rpc('reserve_bag', { p_bag_id: p.id, p_qty: q });
-  if (error) { toast(error.message); return loadBags(); }
+  if (error) { toast(error.message); closeSheet(); return loadBags(); }
   await Promise.all([loadBags(), loadMyOrders()]);
+  closePage();
   sheet(`<h3>🎉 Paketin ayrıldı!</h3><p class="muted">${esc(p.businesses.name)} · Bugün ${hm(p.pickup_from)}–${hm(p.pickup_to)}</p>
     <p>Teslim alırken bu kodu göster:</p><div class="code">${esc(o.code)}</div>
     <button class="btn" id="x">Tamam</button>`);
@@ -154,13 +230,13 @@ async function reserve(p, q) {
 
 // ---------- Siparişlerim ----------
 function renderOrders() {
-  $('#orders').innerHTML = !user ? '<p class="muted">Siparişlerini görmek için giriş yap.</p>'
+  $('#orders').innerHTML = !user ? '<button class="btn small" data-in>Giriş yap</button><p class="empty">Siparişlerini görmek için giriş yap.</p>'
     : myOrders.length ? myOrders.map(o => {
       const p = o.bags;
       return `<div class="order"><b>${esc(p.businesses.name)}</b><span class="muted">${o.qty}× ${esc(p.title)} · ${o.total} ₺</span>
-        <span class="muted">${hm(p.pickup_from)}–${hm(p.pickup_to)}</span>
+        <span class="muted">Teslim: ${hm(p.pickup_from)}–${hm(p.pickup_to)}</span>
         ${o.status === 'teslim' ? '<span class="badge">Teslim alındı ✓</span>' : `<div class="code">${esc(o.code)}</div>`}</div>`;
-    }).join('') : '<p class="muted">Henüz siparişin yok. Haritadan bir paket kurtar!</p>';
+    }).join('') : '<p class="empty">Henüz siparişin yok. Bir paket kurtar!</p>';
 }
 
 // ---------- İşletme paneli ----------
@@ -172,7 +248,7 @@ async function renderBiz() {
       <input name="name" required placeholder="İşletme adı">
       <select name="type"><option value="restoran">Restoran / Lokanta</option><option value="kafe">Kafe</option></select>
       <input name="address" placeholder="Adres">
-      <p class="muted">Konum: Keşfet haritasını mekânının üzerine getir, sonra kaydet. Harita merkezi kullanılır.</p>
+      <p class="muted">Konum: Keşfet'te Harita görünümüne geç, haritayı mekânının üzerine getir, sonra buraya dönüp kaydet.</p>
       <button class="btn">Kaydet</button></form>`;
     $('#bizForm').onsubmit = async e => {
       e.preventDefault();
@@ -211,7 +287,7 @@ async function renderBiz() {
     toast('Paket yayınlandı 🎉'); renderBiz(); loadBags();
   };
 }
-$('#tab-isletme').addEventListener('click', async e => {
+$('#tab-hesap').addEventListener('click', async e => {
   const del = e.target.dataset.del, ok = e.target.dataset.ok;
   if (del) {
     const { error } = await sb.from('bags').delete().eq('id', del);
@@ -229,14 +305,22 @@ $('#tab-isletme').addEventListener('click', async e => {
 document.querySelectorAll('.tabbar button').forEach(btn => btn.onclick = () => {
   document.querySelectorAll('.tabbar button').forEach(x => x.classList.toggle('on', x === btn));
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-' + btn.dataset.t));
-  if (btn.dataset.t === 'kesfet') setTimeout(() => map.invalidateSize(), 50);
+  closePage();
 });
 $('#chips').onclick = e => { const f = e.target.dataset.f; if (!f) return; filter = f;
-  document.querySelectorAll('#chips button').forEach(x => x.classList.toggle('on', x.dataset.f === f)); renderBags(); };
-$('#viewSeg').onclick = e => { const v = e.target.dataset.v; if (!v) return;
+  document.querySelectorAll('#chips button').forEach(x => x.classList.toggle('on', x.dataset.f === f)); render(); };
+$('#q').oninput = e => { query = e.target.value; render(); };
+$('#viewSeg').onclick = e => { const v = e.target.dataset.v; if (!v) return; view = v;
   document.querySelectorAll('#viewSeg button').forEach(x => x.classList.toggle('on', x.dataset.v === v));
-  $('#list').hidden = v !== 'list'; setTimeout(() => map.invalidateSize(), 50); };
-$('#list').onclick = e => { const it = e.target.closest('.item'); if (it) openBag(it.dataset.id); };
+  $('#home').hidden = v === 'map'; $('#mapwrap').hidden = v !== 'map';
+  if (v === 'map') setTimeout(() => { map.invalidateSize(); map.setView(me, 14); }, 50); };
+$('#locBtn').onclick = () => { if (navigator.geolocation) navigator.geolocation.getCurrentPosition(p => {
+  me = [p.coords.latitude, p.coords.longitude]; map.setView(me, 14); meMarker.setLatLng(me); $('#locName').textContent = 'Konumun'; render();
+}, () => toast('Konum izni verilmedi')); };
+document.addEventListener('click', e => {
+  const c = e.target.closest('.card2');
+  if (c && !e.target.closest('[data-fav]')) openBag(c.dataset.id);
+});
 
 renderAuthBars();
 loadBags();

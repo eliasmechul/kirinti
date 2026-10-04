@@ -14,41 +14,52 @@
   <main>
     <!-- KEŞFET -->
     <section id="tab-kesfet" class="tab active">
-      <div class="top">
-        <div class="loc">📍 <span id="locName">Kadıköy, İstanbul</span></div>
-        <div class="seg" id="viewSeg"><button data-v="map" class="on">Harita</button><button data-v="list">Liste</button></div>
+      <header class="head">
+        <div class="head-row">
+          <button class="locbtn" id="locBtn">📍 <b id="locName">Kadıköy, İstanbul</b></button>
+          <div class="toggle" id="viewSeg"><button data-v="list" class="on">Liste</button><button data-v="map">Harita</button></div>
+        </div>
+        <input id="q" class="search" type="search" placeholder="Restoran, kafe veya yemek ara">
         <div class="chips" id="chips">
           <button data-f="hepsi" class="on">Hepsi</button>
           <button data-f="restoran">🍽️ Restoran</button>
           <button data-f="kafe">☕ Kafe</button>
-          <button data-f="simdi">⏰ Şimdi açık</button>
+          <button data-f="simdi">⏰ Şimdi alınabilir</button>
         </div>
-      </div>
-      <div id="map"></div>
-      <div id="list" hidden></div>
+      </header>
+      <div id="home" class="scroll"></div>
+      <div id="mapwrap" hidden><div id="map"></div></div>
+    </section>
+
+    <!-- FAVORİLER -->
+    <section id="tab-favori" class="tab">
+      <h2 class="h">Favoriler</h2>
+      <div id="favs" class="grid"></div>
     </section>
 
     <!-- SİPARİŞLER -->
     <section id="tab-siparis" class="tab">
       <h2 class="h">Siparişlerim</h2>
-      <div class="authbar"></div>
       <div id="orders"></div>
     </section>
 
-    <!-- İŞLETME -->
-    <section id="tab-isletme" class="tab">
-      <h2 class="h">İşletme paneli</h2>
+    <!-- HESAP -->
+    <section id="tab-hesap" class="tab">
+      <h2 class="h">Hesap</h2>
       <div class="authbar"></div>
+      <h3 class="sub">İşletme paneli</h3>
       <div id="bizRoot"></div>
     </section>
   </main>
 
   <nav class="tabbar">
-    <button data-t="kesfet" class="on"><i>🗺️</i>Keşfet</button>
-    <button data-t="siparis"><i>🧾</i>Siparişlerim</button>
-    <button data-t="isletme"><i>🏪</i>İşletme</button>
+    <button data-t="kesfet" class="on"><i>🔍</i>Keşfet</button>
+    <button data-t="favori"><i>🤍</i>Favoriler</button>
+    <button data-t="siparis"><i>🛍️</i>Siparişler</button>
+    <button data-t="hesap"><i>👤</i>Hesap</button>
   </nav>
 
+  <div id="page" class="page" hidden></div>
   <div id="sheet" class="sheet" hidden>
     <div class="sheet-bg"></div>
     <div class="sheet-body" id="sheetBody"></div>
