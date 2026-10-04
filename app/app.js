@@ -24,7 +24,7 @@ const saveFavs = () => { try { localStorage.setItem('kirinti_fav', JSON.stringif
 const hue = s => [...s].reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
 const PASTEL = ['#C9CBDD', '#F8D5C8', '#CFE0C3', '#F6E6B4'];
 const coverStyle = b => `background:${PASTEL[hue(b.name) % PASTEL.length]}`;
-const emoji = p => artFor(p);
+const emoji = p => p.photo_url ? `<img class="ph" src="${esc(p.photo_url)}" alt="${esc(p.title)}" loading="lazy">` : artFor(p);
 const initial = b => esc(b.name.trim()[0] || '?');
 
 // ---------- Harita ----------
@@ -240,6 +240,20 @@ function renderOrders() {
     }).join('') : '<p class="empty">Henüz siparişin yok. Bir paket kurtar!</p>';
 }
 
+
+// Fotoğrafı küçültüp (en fazla 1200px) JPEG olarak Supabase Storage'a yükler
+async function uploadPhoto(file, bizId) {
+  const bmp = await createImageBitmap(file);
+  const k = Math.min(1, 1200 / Math.max(bmp.width, bmp.height));
+  const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.82));
+  const path = `${bizId}/${Date.now()}.jpg`;
+  const { error } = await sb.storage.from('photos').upload(path, blob, { contentType: 'image/jpeg' });
+  if (error) throw error;
+  return sb.storage.from('photos').getPublicUrl(path).data.publicUrl;
+}
+
 // ---------- İşletme paneli ----------
 async function renderBiz() {
   const root = $('#bizRoot');
@@ -270,6 +284,7 @@ async function renderBiz() {
       <input name="desc" placeholder="Kısa açıklama / alerjen bilgisi">
       <div class="row"><input name="orig" type="number" min="1" required placeholder="Normal fiyat ₺"><input name="price" type="number" min="1" required placeholder="İndirimli ₺"></div>
       <div class="row"><input name="qty" type="number" min="1" max="50" required placeholder="Adet"><input name="from" type="time" required value="21:00"><input name="to" type="time" required value="22:00"></div>
+      <label class="muted">Paket fotoğrafı (isteğe bağlı)<input name="photo" type="file" accept="image/jpeg,image/png,image/webp"></label>
       <button class="btn">Yayınla</button></form>
     <h3 class="sub">Bugünkü paketler</h3>
     ${(mine || []).map(p => `<div class="order"><b>${esc(p.title)}</b>
@@ -283,7 +298,11 @@ async function renderBiz() {
     e.preventDefault();
     const f = Object.fromEntries(new FormData(e.target));
     if (+f.price >= +f.orig) return toast('İndirimli fiyat normalden düşük olmalı');
-    const { error } = await sb.from('bags').insert({ business_id: myBiz.id, title: f.title, description: f.desc, original_price: +f.orig, price: +f.price, qty_available: +f.qty, pickup_from: f.from, pickup_to: f.to });
+    let photo_url = null;
+    if (f.photo && f.photo.size) {
+      try { photo_url = await uploadPhoto(f.photo, myBiz.id); } catch { return toast('Fotoğraf yüklenemedi'); }
+    }
+    const { error } = await sb.from('bags').insert({ business_id: myBiz.id, title: f.title, description: f.desc, original_price: +f.orig, price: +f.price, qty_available: +f.qty, pickup_from: f.from, pickup_to: f.to, photo_url });
     if (error) return toast(error.message);
     toast('Paket yayınlandı 🎉'); renderBiz(); loadBags();
   };
