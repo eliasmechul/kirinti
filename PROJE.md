@@ -20,9 +20,9 @@ Uygulamadaki anahtar yalnızca "publishable" olandır. `service_role` anahtarın
 
 ## Klasör yapısı
 ```
-index.html, styles.css, script.js   tanıtım sitesi (ESKİ görünüm, güncellenecek)
-art.js                              eski illüstrasyonlar
-app/                                uygulama (Supabase'e bağlı, ESKİ görünüm)
+index.html, styles.css, script.js   tanıtım sitesi (yeni tasarım)
+app/                                uygulama (Supabase'e bağlı, yeni tasarım)
+assets/logo/                        logo (SVG): işaret, yatay logo, uygulama simgesi, favicon
 assets/photos/                      stok fotoğraflar + CREDITS.md
 design/                             tuvaldeki tasarımın kaynak dosyaları (YENİ hedef)
 design/preview/index.html           tasarımları çift tıklayıp tarayıcıda görmek için
@@ -52,7 +52,7 @@ Too Good To Go'nun sitesi ve uygulaması incelendi; **düzen ve akış** oradan,
 4. **Marka:** TÜRKPATENT ön sorgusu (sınıf 9, 35, 43), Instagram ve mağaza adı kontrolü.
 
 ## Sıradaki işler
-1. Tuvaldeki yeni tasarımı gerçek **siteye** ve **uygulamaya** aktarmak (şu an kod eski görünümde).
+1. Site ve uygulamayı tarayıcıda uçtan uca denemek (yeni tasarım yazıldı, yalnızca sözdizimi denetlendi; görsel/çalışma testi yapılmadı).
 2. Siteyi internete açmak (Netlify veya Vercel) ve fotoğraf yollarını buna göre ayarlamak.
 3. PWA (telefonda uygulama gibi açılsın), sonra Capacitor ile App Store / Google Play.
 4. Komisyon alanları (`commission_rate`, `commission_amount`, `payout_amount`, ödeme durumu) ve iade akışı.

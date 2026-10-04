@@ -3,10 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#12332c">
+<meta name="theme-color" content="#0B4F4A">
 <title>Kırıntı</title>
+<link rel="icon" href="../assets/logo/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Caveat+Brush&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
@@ -14,49 +15,69 @@
   <main>
     <!-- KEŞFET -->
     <section id="tab-kesfet" class="tab active">
-      <header class="head">
-        <div class="head-row">
-          <button class="locbtn" id="locBtn">📍 <b id="locName">Kadıköy, İstanbul</b></button>
-          <div class="toggle" id="viewSeg"><button data-v="list" class="on">Liste</button><button data-v="map">Harita</button></div>
+      <div class="scroll" id="home">
+        <div class="loc-row">
+          <button class="locbtn" id="locBtn" type="button" aria-label="Konumumu kullan">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+            <b>Mevcut konum</b><span id="locName">Kadıköy</span>
+            <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
         </div>
-        <input id="q" class="search" type="search" placeholder="Restoran, kafe veya yemek ara">
-        <div class="chips" id="chips">
-          <button data-f="hepsi" class="on">Hepsi</button>
-          <button data-f="restoran">🍽️ Restoran</button>
-          <button data-f="kafe">☕ Kafe</button>
-          <button data-f="simdi">⏰ Şimdi alınabilir</button>
+        <label class="searchbox"><span class="sr">Ara</span><input id="q" type="search" placeholder="Restoran, kafe veya yemek ara"></label>
+        <div class="cats" id="cats" role="group" aria-label="Kategoriler">
+          <button type="button" data-c="hepsi" class="on"><img src="../assets/photos/croissant.jpg" alt=""><span>Hepsi</span></button>
+          <button type="button" data-c="restoran"><img src="../assets/photos/pide.jpg" alt=""><span>Restoran</span></button>
+          <button type="button" data-c="kafe"><img src="../assets/photos/coffee.jpg" alt=""><span>Kafe</span></button>
+          <button type="button" data-c="pastane"><img src="../assets/photos/cake.jpg" alt=""><span>Pastane</span></button>
+          <button type="button" data-c="kahvalti"><img src="../assets/photos/breakfast.jpg" alt=""><span>Kahvaltı</span></button>
         </div>
-      </header>
-      <div id="home" class="scroll"></div>
-      <div id="mapwrap" hidden><div id="map"></div></div>
+        <div id="sections"></div>
+      </div>
+    </section>
+
+    <!-- GÖZAT (HARİTA) -->
+    <section id="tab-gozat" class="tab">
+      <div id="map"></div>
+      <div class="map-top">
+        <div class="map-search">Kadıköy</div>
+        <button type="button" class="map-list" id="toList">Liste</button>
+      </div>
+      <div id="pick"></div>
     </section>
 
     <!-- FAVORİLER -->
     <section id="tab-favori" class="tab">
-      <h2 class="h">Favoriler</h2>
-      <div id="favs" class="grid"></div>
+      <div class="scroll pad">
+        <h2 class="h">Favoriler</h2>
+        <div id="favs" class="grid"></div>
+      </div>
     </section>
 
     <!-- SİPARİŞLER -->
     <section id="tab-siparis" class="tab">
-      <h2 class="h">Siparişlerim</h2>
-      <div id="orders"></div>
+      <div class="scroll pad">
+        <h2 class="h">Siparişler</h2>
+        <div id="orders"></div>
+      </div>
     </section>
 
-    <!-- HESAP -->
-    <section id="tab-hesap" class="tab">
-      <h2 class="h">Hesap</h2>
-      <div class="authbar"></div>
-      <h3 class="sub">İşletme paneli</h3>
-      <div id="bizRoot"></div>
+    <!-- PROFİL -->
+    <section id="tab-profil" class="tab">
+      <div class="scroll pad">
+        <h2 class="h">Profil</h2>
+        <div class="authbar"></div>
+        <h3 class="sub">İşletme paneli</h3>
+        <div id="bizRoot"></div>
+      </div>
     </section>
   </main>
 
-  <nav class="tabbar">
-    <button data-t="kesfet" class="on"><i>🔍</i>Keşfet</button>
-    <button data-t="favori"><i>🤍</i>Favoriler</button>
-    <button data-t="siparis"><i>🛍️</i>Siparişler</button>
-    <button data-t="hesap"><i>👤</i>Hesap</button>
+  <nav class="tabbar" aria-label="Ana menü">
+    <button data-t="kesfet" class="on" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>Keşfet</button>
+    <button data-t="gozat" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Gözat</button>
+    <button data-t="favori" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></svg>Favoriler</button>
+    <button data-t="siparis" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l1 12H5z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>Siparişler</button>
+    <button data-t="profil" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-5 15-5 16 0"/></svg>Profil</button>
   </nav>
 
   <div id="page" class="page" hidden></div>
@@ -64,11 +85,10 @@
     <div class="sheet-bg"></div>
     <div class="sheet-body" id="sheetBody"></div>
   </div>
-  <div id="toast"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="../art.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
