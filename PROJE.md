@@ -25,6 +25,7 @@ art.js                              eski illüstrasyonlar
 app/                                uygulama (Supabase'e bağlı, ESKİ görünüm)
 assets/photos/                      stok fotoğraflar + CREDITS.md
 design/                             tuvaldeki tasarımın kaynak dosyaları (YENİ hedef)
+design/preview/index.html           tasarımları çift tıklayıp tarayıcıda görmek için
 supabase/README.md                  veritabanı notları
 ```
 
