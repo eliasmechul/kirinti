@@ -6,7 +6,7 @@
 <title>Kırıntı – İyi yemek çöpe gitmesin</title>
 <meta name="description" content="Restoran ve kafelerde kapanıştan önce artan taptaze yemekleri yarı fiyatına veya daha ucuza kurtar. Haritada bul, ayır, teslim al.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Caveat+Brush&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -38,14 +38,14 @@
         <a href="#isletme" class="btn btn-ghost">İşletmeni kaydet</a>
       </div>
     </div>
-    <div class="phone" aria-hidden="true">
+    <div class="stage"><span class="deco d1" data-art="banana"></span><span class="deco d2" data-art="pepper"></span><span class="deco d3" data-art="jars"></span><div class="phone" aria-hidden="true">
       <div class="screen">
         <div class="search">📍 Kadıköy, İstanbul</div>
         <div class="card"><span class="tag">3 paket kaldı</span><b>Köşe Lokantası</b><span>Akşam Yemeği Paketi</span><div><strong>110 ₺</strong> <s>320 ₺</s></div><small>Bugün 21:30–22:30 · 0,4 km</small></div>
         <div class="card kafe"><span class="tag">4 paket kaldı</span><b>Moda Kafe</b><span>Pasta &amp; Kurabiye Paketi</span><div><strong>60 ₺</strong> <s>180 ₺</s></div><small>Bugün 20:00–22:00 · 0,6 km</small></div>
         <div class="card"><span class="tag">5 paket kaldı</span><b>Barış Pide Salonu</b><span>Pide &amp; Lahmacun Paketi</span><div><strong>95 ₺</strong> <s>280 ₺</s></div><small>Bugün 22:00–23:00 · 1,1 km</small></div>
       </div>
-    </div>
+    </div></div>
   </div>
 </section>
 
@@ -60,9 +60,9 @@
   <div class="wrap">
     <h2>Neden Kırıntı?</h2>
     <div class="grid3">
-      <div class="box"><span class="ico">💸</span><h3>Yarı fiyatına veya daha ucuza</h3><p>Sevdiğin restoran ve kafelerin yemeklerini büyük indirimle al.</p></div>
-      <div class="box"><span class="ico">📍</span><h3>Çevrende kurtar</h3><p>Harita üzerinde yakınındaki paketleri gör, mesafeyi ve teslim saatini anında öğren.</p></div>
-      <div class="box"><span class="ico">🌍</span><h3>Gezegene iyilik yap</h3><p>Her kurtarılan paket, çöpe giden yemek ve boşa harcanan emek demek değil.</p></div>
+      <div class="box"><span class="art" data-art="pepper"></span><h3>Yarı fiyatına veya daha ucuza</h3><p>Sevdiğin restoran ve kafelerin yemeklerini büyük indirimle al.</p></div>
+      <div class="box"><span class="art" data-art="bag"></span><h3>Çevrende kurtar</h3><p>Harita üzerinde yakınındaki paketleri gör, mesafeyi ve teslim saatini anında öğren.</p></div>
+      <div class="box"><span class="art" data-art="broccoli"></span><h3>Gezegene iyilik yap</h3><p>Her kurtarılan paket, çöpe giden yemek ve boşa harcanan emek demek değil.</p></div>
     </div>
   </div>
 </section>
@@ -71,10 +71,10 @@
   <div class="wrap">
     <h2>4 adımda kurtar</h2>
     <div class="grid4">
-      <div class="step"><b>1</b><h3>Keşfet</h3><p>Çevrendeki sürpriz paketleri harita veya listeden gör.</p></div>
-      <div class="step"><b>2</b><h3>Ayır</h3><p>Paketini seç, uygulama içinden güvenle öde.</p></div>
-      <div class="step"><b>3</b><h3>Teslim al</h3><p>Belirtilen saatte mekâna git, kodunu göster.</p></div>
-      <div class="step"><b>4</b><h3>Afiyet olsun</h3><p>Yemeği kurtardın, cüzdanın ve gezegen teşekkür ediyor.</p></div>
+      <div class="step"><span class="art" data-art="phone"></span><b>1</b><h3>Keşfet</h3><p>Çevrendeki sürpriz paketleri harita veya listeden gör.</p></div>
+      <div class="step"><span class="art" data-art="bag"></span><b>2</b><h3>Ayır</h3><p>Paketini seç, uygulama içinden güvenle öde.</p></div>
+      <div class="step"><span class="art" data-art="plate"></span><b>3</b><h3>Teslim al</h3><p>Belirtilen saatte mekâna git, kodunu göster.</p></div>
+      <div class="step"><span class="art" data-art="soup"></span><b>4</b><h3>Afiyet olsun</h3><p>Yemeği kurtardın, cüzdanın ve gezegen teşekkür ediyor.</p></div>
     </div>
   </div>
 </section>
@@ -140,6 +140,7 @@
   </div>
 </footer>
 
+<script src="art.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

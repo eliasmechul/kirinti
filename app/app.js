@@ -22,8 +22,9 @@ const saveFavs = () => { try { localStorage.setItem('kirinti_fav', JSON.stringif
 
 // ---------- Görsel yardımcılar ----------
 const hue = s => [...s].reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
-const coverStyle = b => `background:linear-gradient(135deg,hsl(${hue(b.name)} 45% 38%),hsl(${(hue(b.name) + 40) % 360} 50% 22%))`;
-const emoji = p => /pasta|kurabiye|tatlı|baklava/i.test(p.title) ? '🍰' : /pide|lahmacun/i.test(p.title) ? '🥙' : /meze/i.test(p.title) ? '🥗' : /brunch|kahvaltı|sandviç/i.test(p.title) ? '🥐' : p.businesses.type === 'kafe' ? '☕' : '🍲';
+const PASTEL = ['#C9CBDD', '#F8D5C8', '#CFE0C3', '#F6E6B4'];
+const coverStyle = b => `background:${PASTEL[hue(b.name) % PASTEL.length]}`;
+const emoji = p => artFor(p);
 const initial = b => esc(b.name.trim()[0] || '?');
 
 // ---------- Harita ----------

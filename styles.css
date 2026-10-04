@@ -78,3 +78,24 @@ footer a{opacity:.85}
   .nav-in{justify-content:space-between}
   .phone{transform:none}
 }
+
+/* ---- Çizim dili: lavanta, şeftali, adaçayı + el yazısı başlıklar ---- */
+:root{--lav:#C9CBDD;--lav2:#A9ACC3;--peach:#F4A28C}
+h2,.kicker{font-family:'Caveat Brush','Plus Jakarta Sans',cursive;font-weight:400;letter-spacing:.01em}
+h2{font-size:clamp(2.2rem,4.6vw,3.2rem)}
+.kicker{font-size:1.3rem;text-transform:none;letter-spacing:.02em}
+.sec.alt{background:var(--lav)}
+#neden{background:var(--lav)}
+.box{border:2px solid #2E3047;box-shadow:4px 4px 0 #2E3047}
+.art{display:block;width:84px;height:84px;margin-bottom:6px}
+.art svg,.deco svg{width:100%;height:100%}
+.step .art{background:var(--lav);border-radius:50%;padding:12px;width:96px;height:96px}
+.stage{position:relative;justify-self:center}
+.deco{position:absolute;width:96px;height:96px;z-index:2}
+.d1{left:-60px;top:20px;transform:rotate(-12deg)}
+.d2{right:-50px;top:-10px;transform:rotate(10deg)}
+.d3{left:-50px;bottom:10px;transform:rotate(8deg)}
+.marquee{background:var(--peach)}
+@media(max-width:820px){.d1{left:-10px}.d2{right:-10px}.d3{left:-10px}}
+.deco{width:130px;height:130px}
+.d1{left:-100px;top:10px}.d2{right:-90px;top:-20px}.d3{left:-90px;bottom:0}
