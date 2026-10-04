@@ -32,7 +32,7 @@ supabase/README.md                  veritabanı notları
 ## Tasarım yönü (karar verildi)
 Too Good To Go'nun sitesi ve uygulaması incelendi; **düzen ve akış** oradan, marka öğeleri bizim.
 - Tam ekran koyu yeşil giriş, dar ve kalın büyük harfli başlık, yiyecek isimleri şeridi, "1. Adım" bölümü, ince çerçeveli işletme kartları.
-- Uygulama: Mevcut konum, yuvarlak kategori fotoğrafları, büyük fotoğraflı kartlar (puan rozeti, mekân logosu, fiyat), tam genişlik detay sayfası, kaydırarak onay, alt menü: Keşfet / Gözat / Favoriler / Siparişler / Profil.
+- Uygulama (Too Good To Go'nun gerçek uygulama videosu incelenerek yeniden yapıldı): üstte konum rozeti ve alt panel (seçili / şu anki konum, ev, iş), yuvarlak kategori görselleri, "Tümünü gör" bağlantılı yatay bölümler (Çevrendeki favoriler, Kaçmadan kurtar, Yeni paketler…), kartlarda fotoğraf + adet rozeti + mekân logosu + başlığın yanında kalp, fotoğraflı detay sayfası (kaydırınca üst çubuk, adres, "Bu paket hakkında", yol tarifi haritası, teslim bilgisi, ambalaj, alerjenler), altta fiyat + adet + "Rezerve et", kaydırarak onay, teslim kodu ekranı. Alt menü: Keşfet / Gözat / Siparişler / Favoriler / Profil. Puan/yorum henüz yok (veri yok).
 - Renkler: derin yeşil `#0B4F4A`, krem `#F8F2E8`, mercan `#F26B4E`, küçük başlıklarda sarı `#EDE36B`.
 - Yazı tipleri: Barlow Condensed (başlık), DM Sans (gövde).
 - **Kopyalanmayacaklar:** Too Good To Go'nun logosu, ismi, ikonları, fotoğrafları; paylaşılan infografiğin sanatçısının çizimleri.
@@ -52,7 +52,7 @@ Too Good To Go'nun sitesi ve uygulaması incelendi; **düzen ve akış** oradan,
 4. **Marka:** TÜRKPATENT ön sorgusu (sınıf 9, 35, 43), Instagram ve mağaza adı kontrolü.
 
 ## Sıradaki işler
-1. Site ve uygulamayı tarayıcıda uçtan uca denemek (yeni tasarım yazıldı, yalnızca sözdizimi denetlendi; görsel/çalışma testi yapılmadı).
+1. Uygulamada giriş → rezervasyon → teslim kodu akışını gerçek bir hesapla uçtan uca denemek (ana ekran, detay, harita, konum paneli tarayıcıda görüldü; giriş ve rezervasyon denenmedi).
 2. Siteyi internete açmak (Netlify veya Vercel) ve fotoğraf yollarını buna göre ayarlamak.
 3. PWA (telefonda uygulama gibi açılsın), sonra Capacitor ile App Store / Google Play.
 4. Komisyon alanları (`commission_rate`, `commission_amount`, `payout_amount`, ödeme durumu) ve iade akışı.
@@ -61,5 +61,6 @@ Too Good To Go'nun sitesi ve uygulaması incelendi; **düzen ve akış** oradan,
 
 ## Çalışma notları
 - Yerelde çalıştırma: klasörde `python3 -m http.server 8766`, sonra `http://localhost:8766` (site) ve `/app/index.html` (uygulama).
+- Claude'un önizleme sunucusu `~/Documents` klasörünü okuyamıyor (korumalı çalışıyor); önizleme için projenin kopyası geçici klasöre alınır. Kendi tarayıcında `python3 -m http.server 8766` ile sorunsuz çalışır.
 - Fotoğrafların kaynağı ve lisansı: `assets/photos/CREDITS.md`.
 - Tüm commit'lerde Claude ortak yazar olarak belirtilir.
