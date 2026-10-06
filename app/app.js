@@ -212,7 +212,7 @@ function authSheet(msg) {
 function renderAuthBars() {
   document.querySelectorAll('.authbar').forEach(el => {
     el.innerHTML = user
-      ? `<p class="muted">${esc(user.email)} · <a href="#" data-out style="color:var(--teal)">Çıkış</a></p>`
+      ? `<p class="muted">${esc(user.email)} · <a href="#" data-out style="color:var(--pink-d)">Çıkış</a></p>`
       : `<button class="btn small" data-in type="button">Giriş yap / Kayıt ol</button>`;
   });
 }
@@ -288,7 +288,7 @@ function openBag(id) {
   // küçük harita
   dmap = L.map('dmap', { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, touchZoom: false, attributionControl: false }).setView([b.lat, b.lng], 16);
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(dmap);
-  L.circleMarker([b.lat, b.lng], { radius: 9, color: '#fff', weight: 3, fillColor: '#F26B4E', fillOpacity: 1 }).addTo(dmap);
+  L.circleMarker([b.lat, b.lng], { radius: 9, color: '#fff', weight: 3, fillColor: '#E8808A', fillOpacity: 1 }).addTo(dmap);
 }
 
 // Kaydırarak onayla

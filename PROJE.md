@@ -33,7 +33,7 @@ supabase/README.md                  veritabanı notları
 Too Good To Go'nun sitesi ve uygulaması incelendi; **düzen ve akış** oradan, marka öğeleri bizim.
 - Tam ekran koyu yeşil giriş, dar ve kalın büyük harfli başlık, yiyecek isimleri şeridi, "1. Adım" bölümü, ince çerçeveli işletme kartları.
 - Uygulama (Too Good To Go'nun gerçek uygulama videosu incelenerek yeniden yapıldı): üstte konum rozeti ve alt panel (seçili / şu anki konum, ev, iş), yuvarlak kategori görselleri, "Tümünü gör" bağlantılı yatay bölümler (Çevrendeki favoriler, Kaçmadan kurtar, Yeni paketler…), kartlarda fotoğraf + adet rozeti + mekân logosu + başlığın yanında kalp, fotoğraflı detay sayfası (kaydırınca üst çubuk, adres, "Bu paket hakkında", yol tarifi haritası, teslim bilgisi, ambalaj, alerjenler), altta fiyat + adet + "Rezerve et", kaydırarak onay, teslim kodu ekranı. Alt menü: Keşfet / Gözat / Siparişler / Favoriler / Profil. Puan/yorum henüz yok (veri yok).
-- Renkler: derin yeşil `#0B4F4A`, krem `#F8F2E8`, mercan `#F26B4E`, küçük başlıklarda sarı `#EDE36B`.
+- Renkler (uygulama, pembe tema): ana pembe `#E8808A` (düğme/dolgu, üstünde koyu yazı), koyu pembe `#B03F4F` (metin/ikon vurgusu), açık pembe `#FBE4E6`, mürekkep `#3B1E24`. Tanıtım sitesi hâlâ eski yeşil/krem/mercan paletinde.
 - Yazı tipleri: Barlow Condensed (başlık), DM Sans (gövde).
 - **Kopyalanmayacaklar:** Too Good To Go'nun logosu, ismi, ikonları, fotoğrafları; paylaşılan infografiğin sanatçısının çizimleri.
 - Kullanıcının paylaştığı infografiğin çizim dili (lavanta, şeftali) denendi; kullanıcı "profesyonel durmuyor" dedi, bırakıldı.
