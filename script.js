@@ -5,10 +5,10 @@ const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE
 
 // ---- Adımlar ----
 const STEPS = [
-  { t: '1. Adım', p: 'Yakınındaki restoran ve kafelerde kapanıştan önce ayrılan sürpriz paketleri keşfet.', img: 'assets/photos/baker.jpg', alt: 'Fırın tezgâhı', img2: 'assets/photos/croissant.jpg', alt2: 'Taze kruvasan' },
-  { t: '2. Adım', p: 'Seçtiğin paketi onayla ve uygulama içinden güvenle öde.', img: 'assets/photos/coffee.jpg', alt: 'Latte', img2: 'assets/photos/cake.jpg', alt2: 'Pasta dilimi' },
-  { t: '3. Adım', p: 'Belirtilen saat aralığında mekâna git, kodunu göster ve paketini teslim al.', img: 'assets/photos/pide.jpg', alt: 'Taze pide', img2: 'assets/photos/lahmacun.jpg', alt2: 'Lahmacun' },
-  { t: '4. Adım', p: 'Yemeği kurtardın. Hem cüzdanın hem gezegen teşekkür ediyor.', img: 'assets/photos/breakfast.jpg', alt: 'Türk kahvaltısı', img2: 'assets/photos/meze.jpg', alt2: 'Meze tabağı' },
+  { t: '1. Adım', p: 'Yakınındaki restoran ve kafelerde kapanıştan önce ayrılan sürpriz paketleri keşfet.', img: 'assets/visuals/baker.svg', alt: 'Fırın tezgâhı', img2: 'assets/visuals/croissant.svg', alt2: 'Taze kruvasan' },
+  { t: '2. Adım', p: 'Seçtiğin paketi onayla ve uygulama içinden güvenle öde.', img: 'assets/visuals/coffee.svg', alt: 'Latte', img2: 'assets/visuals/cake.svg', alt2: 'Pasta dilimi' },
+  { t: '3. Adım', p: 'Belirtilen saat aralığında mekâna git, kodunu göster ve paketini teslim al.', img: 'assets/visuals/pide.svg', alt: 'Taze pide', img2: 'assets/visuals/lahmacun.svg', alt2: 'Lahmacun' },
+  { t: '4. Adım', p: 'Yemeği kurtardın. Hem cüzdanın hem gezegen teşekkür ediyor.', img: 'assets/visuals/breakfast.svg', alt: 'Türk kahvaltısı', img2: 'assets/visuals/meze.svg', alt2: 'Meze tabağı' },
 ];
 let cur = 0;
 const $ = s => document.querySelector(s);

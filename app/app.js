@@ -41,7 +41,7 @@ try { favs = JSON.parse(localStorage.getItem('kirinti_fav') || '[]'); } catch {}
 const saveFavs = () => { try { localStorage.setItem('kirinti_fav', JSON.stringify(favs)); } catch {} };
 
 // ---------- Görsel yardımcılar ----------
-const photo = p => esc(p.photo_url || (p.businesses.type === 'kafe' ? '../assets/photos/coffee.jpg' : '../assets/photos/soup.jpg'));
+const photo = p => esc(p.photo_url || (p.businesses.type === 'kafe' ? '../assets/visuals/coffee.svg' : '../assets/visuals/soup.svg'));
 const initial = b => esc(b.name.trim()[0] || '?');
 const typeLabel = b => b.type === 'kafe' ? 'Kafe' : 'Restoran';
 const dist = p => km(me, [p.businesses.lat, p.businesses.lng]);
