@@ -288,7 +288,7 @@ function openBag(id) {
   // küçük harita
   dmap = L.map('dmap', { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, touchZoom: false, attributionControl: false }).setView([b.lat, b.lng], 16);
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(dmap);
-  L.circleMarker([b.lat, b.lng], { radius: 9, color: '#fff', weight: 3, fillColor: '#F4BD56', fillOpacity: 1 }).addTo(dmap);
+  L.circleMarker([b.lat, b.lng], { radius: 9, color: '#fff', weight: 3, fillColor: '#FFC93C', fillOpacity: 1 }).addTo(dmap);
 }
 
 // Kaydırarak onayla
