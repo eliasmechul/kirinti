@@ -1,0 +1,17 @@
+{
+  "name": "Kırıntı",
+  "short_name": "Kırıntı",
+  "description": "Mahalledeki restoran ve kafelerin kapanış öncesi artan yemeklerini uygun fiyata kurtar.",
+  "lang": "tr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F6FAE8",
+  "theme_color": "#FFC93C",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -54,7 +54,7 @@ Too Good To Go'nun sitesi ve uygulaması incelendi; **düzen ve akış** oradan,
 ## Sıradaki işler
 1. Uygulamada giriş → rezervasyon → teslim kodu akışını gerçek bir hesapla uçtan uca denemek (ana ekran, detay, harita, konum paneli tarayıcıda görüldü; giriş ve rezervasyon denenmedi).
 2. Siteyi internete açmak (Netlify veya Vercel) ve fotoğraf yollarını buna göre ayarlamak.
-3. PWA (telefonda uygulama gibi açılsın), sonra Capacitor ile App Store / Google Play.
+3. ~~PWA~~ yapıldı (manifest, servis çalışanı, simgeler). Sıradaki: Capacitor ile App Store / Google Play. Not: uygulama dosyalarını değiştirince `app/sw.js` içindeki `CACHE` sürümünü artır.
 4. Komisyon alanları (`commission_rate`, `commission_amount`, `payout_amount`, ödeme durumu) ve iade akışı.
 5. Puan/yorum, bildirimler, favorileri veritabanına taşımak.
 6. KVKK aydınlatma metni, kullanım koşulları, mesafeli satış sözleşmesi.
@@ -64,3 +64,15 @@ Too Good To Go'nun sitesi ve uygulaması incelendi; **düzen ve akış** oradan,
 - Claude'un önizleme sunucusu `~/Documents` klasörünü okuyamıyor (korumalı çalışıyor); önizleme için projenin kopyası geçici klasöre alınır. Kendi tarayıcında `python3 -m http.server 8766` ile sorunsuz çalışır.
 - Fotoğrafların kaynağı ve lisansı: `assets/photos/CREDITS.md`.
 - Tüm commit'lerde Claude ortak yazar olarak belirtilir.
+
+## Uygulama iyileştirmeleri (2026-10-06)
+- Keşfet'te arama kutusu (Gözat'taki ile bağlı), %indirim rozeti, "Şimdi teslim alınabilir" etiketi, metre/km gösterimi, yükleniyor iskeleti ve hata durumunda "Tekrar dene".
+- Favori kalbi artık listeyi yeniden çizmez (kaydırma yerinde kalır); arama 160 ms beklemeyle çalışır; mesafe önbelleğe alınır.
+- Harita kütüphanesi (Leaflet) yalnızca Gözat veya detay haritası gerektiğinde yüklenir; açılış hızlandı.
+- Giriş yapınca yarım kalan rezervasyon devam eder; "Şifremi unuttum"; kaydırarak onay klavye ile de yapılabilir; çift gönderim engellendi.
+- Telefonun geri tuşu ve Esc, sayfa/panelleri uygulamadan çıkmadan kapatır.
+- Kayıtlı konumlar (Ev / İş / Başka) bu cihazda saklanır. İşletme kaydında "Konumumu kullan" (harita merkezi yerine).
+- Siparişler Aktif / Geçmiş olarak ayrıldı; profil kartı; işletme paneli açılır bölüm.
+- Paketler arka plandan dönünce ve 2 dakikada bir yenilenir.
+- PWA: `manifest.webmanifest`, `sw.js`, `icons/`.
+

@@ -34,7 +34,7 @@ const ICON = {
 };
 
 const DEFAULT_LOC = [40.9908, 29.0290];
-let user = null, bags = [], myOrders = [], myBiz = null;
+let user = null, bags = [], myOrders = [], myBiz = null, pending = null;
 let cat = 'hepsi', query = '', me = DEFAULT_LOC, locMode = 'preset', selId = null;
 let favs = [], SECTIONS = {};
 try { favs = JSON.parse(localStorage.getItem('kirinti_fav') || '[]'); } catch {}
@@ -44,42 +44,76 @@ const saveFavs = () => { try { localStorage.setItem('kirinti_fav', JSON.stringif
 const photo = p => esc(p.photo_url || (p.businesses.type === 'kafe' ? '../assets/visuals/coffee.svg' : '../assets/visuals/soup.svg'));
 const initial = b => esc(b.name.trim()[0] || '?');
 const typeLabel = b => b.type === 'kafe' ? 'Kafe' : 'Restoran';
-const dist = p => km(me, [p.businesses.lat, p.businesses.lng]);
+const dist = p => p._d ??= km(me, [p.businesses.lat, p.businesses.lng]);
+const fmtDist = d => d < 1 ? `${Math.max(50, Math.round(d * 10) * 100)} m` : `${d.toFixed(1)} km`;
+const pct = p => Math.round((1 - p.price / p.original_price) * 100);
+const timeLabel = p => isOpen(p) ? 'Şimdi teslim alınabilir' : ended(p) ? 'Süre doldu' : `Bugün ${hm(p.pickup_from)} - ${hm(p.pickup_to)}`;
 const isFav = id => favs.includes(id);
 const routeUrl = b => `https://www.google.com/maps/dir/?api=1&destination=${b.lat},${b.lng}`;
 
-// ---------- Harita ----------
-const map = L.map('map', { zoomControl: false }).setView(me, 14);
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
-const meMarker = L.circleMarker(me, { radius: 8, color: '#fff', weight: 3, fillColor: '#2f7cff', fillOpacity: 1 }).addTo(map);
-const layer = L.layerGroup().addTo(map);
+// ---------- Harita (Leaflet yalnızca gerektiğinde yüklenir) ----------
+const LEAFLET = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min';
+let leafletReady = null, map = null, meMarker = null, layer = null, mapDirty = true;
+const loadLeaflet = () => leafletReady ||= new Promise((ok, fail) => {
+  const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = LEAFLET + '.css'; document.head.append(css);
+  const js = document.createElement('script'); js.src = LEAFLET + '.js'; js.onload = ok;
+  js.onerror = () => { leafletReady = null; fail(new Error('leaflet')); }; document.head.append(js);
+});
+async function ensureMap() {
+  if (map) return map;
+  await loadLeaflet();
+  map = L.map('map', { zoomControl: false }).setView(me, 14);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+  meMarker = L.circleMarker(me, { radius: 8, color: '#fff', weight: 3, fillColor: '#2f7cff', fillOpacity: 1 }).addTo(map);
+  layer = L.layerGroup().addTo(map);
+  return map;
+}
 function setLocation(coords, label, mode) {
-  me = coords; locMode = mode; map.setView(me, 14); meMarker.setLatLng(me);
+  me = coords; locMode = mode; bags.forEach(p => delete p._d);
+  if (map) { map.setView(me, 14); meMarker.setLatLng(me); }
   $('#locName').textContent = label; render();
 }
-function useCurrentLocation() {
+function getPosition(ok) {
   if (!navigator.geolocation) return toast('Bu cihazda konum desteklenmiyor');
-  navigator.geolocation.getCurrentPosition(
-    p => { setLocation([p.coords.latitude, p.coords.longitude], 'Şu anki konum', 'current'); closeSheet(); },
-    () => toast('Konum izni verilmedi'), { timeout: 6000 });
+  toast('Konumun alınıyor…');
+  navigator.geolocation.getCurrentPosition(p => ok([p.coords.latitude, p.coords.longitude]),
+    () => toast('Konum izni verilmedi'), { timeout: 8000, maximumAge: 60000 });
 }
+function useCurrentLocation() {
+  getPosition(c => { setLocation(c, 'Şu anki konum', 'current'); closeSheet(); });
+}
+// Kayıtlı konumlar (Ev / İş / Başka): yalnızca bu cihazda saklanır
+let places = {};
+try { places = JSON.parse(localStorage.getItem('kirinti_places') || '{}'); } catch {}
+const savePlaces = () => { try { localStorage.setItem('kirinti_places', JSON.stringify(places)); } catch {} };
+const PLACE_NAME = { home: 'Ev', work: 'İş', other: 'Başka konum' };
 function locSheet() {
-  const row = (ic, t, sub, tail, id) => `<button class="locrow" type="button" ${id ? `data-loc="${id}"` : 'data-soon'}><span class="ic">${ic}</span><span class="t">${t}${sub ? `<small>${sub}</small>` : ''}</span>${tail}</button>`;
+  const row = (ic, t, sub, tail, attr) => `<button class="locrow" type="button" ${attr}><span class="ic">${ic}</span><span class="t">${t}${sub ? `<small>${sub}</small>` : ''}</span>${tail}</button>`;
+  const place = k => places[k]
+    ? row(ICON[k], PLACE_NAME[k], 'Kayıtlı konum', `<span class="radio ${locMode === k ? 'on' : ''}"></span>`, `data-loc="${k}"`)
+    : row(ICON[k], PLACE_NAME[k], 'Şu anki konumunu kaydet', '<span class="add">Ekle</span>', `data-addplace="${k}"`);
   sheet(`<h3>Konum</h3>
-    ${row(ICON.other, 'Seçili konum', 'Kadıköy, İstanbul', `<span class="radio ${locMode === 'preset' ? 'on' : ''}"></span>`, 'preset')}
-    ${row(ICON.locate, 'Şu anki konum', '', `<span class="radio ${locMode === 'current' ? 'on' : ''}"></span>`, 'current')}
-    ${row(ICON.home, 'Ev', '', '<span class="add">Ekle</span>')}
-    ${row(ICON.work, 'İş', '', '<span class="add">Ekle</span>')}
-    ${row(ICON.other, 'Başka konum', '', '<span class="add">Ekle</span>')}
+    ${row(ICON.other, 'Seçili konum', 'Kadıköy, İstanbul', `<span class="radio ${locMode === 'preset' ? 'on' : ''}"></span>`, 'data-loc="preset"')}
+    ${row(ICON.locate, 'Şu anki konum', '', `<span class="radio ${locMode === 'current' ? 'on' : ''}"></span>`, 'data-loc="current"')}
+    ${place('home')}${place('work')}${place('other')}
     <button class="btn sec" id="x" type="button" style="margin-top:8px">Kapat</button>`);
   $('#x').onclick = closeSheet;
 }
 
 // ---------- Veri ----------
-async function loadBags() {
-  const { data, error } = await sb.from('bags').select('*, businesses(*)').eq('pickup_date', todayTR());
-  if (error) return toast('Paketler yüklenemedi');
-  bags = data; render();
+let loaded = false, loadingBags = null;
+const skeleton = () => `<div class="rail">${'<div class="card sk"></div>'.repeat(3)}</div>`;
+function loadBags() {
+  return loadingBags ||= (async () => {
+    if (!loaded) $('#sections').innerHTML = `<div class="sec-h"><h3>Paketler yükleniyor…</h3></div>${skeleton()}`;
+    const { data, error } = await sb.from('bags').select('*, businesses(*)').eq('pickup_date', todayTR());
+    if (error) {
+      if (!loaded) $('#sections').innerHTML = '<div class="empty"><p>Paketler yüklenemedi. İnternet bağlantını kontrol et.</p><button class="btn small" data-retry type="button" style="margin-top:12px">Tekrar dene</button></div>';
+      else toast('Paketler güncellenemedi');
+      return;
+    }
+    loaded = true; bags = data; render();
+  })().finally(() => { loadingBags = null; });
 }
 async function loadMyOrders() {
   if (!user) { myOrders = []; return renderOrders(); }
@@ -113,14 +147,14 @@ function visible() {
 function card(p) {
   const b = p.businesses;
   return `<article class="card" data-id="${p.id}">
-    <div class="ph"><img class="cover" src="${photo(p)}" alt="${esc(p.title)}" loading="lazy">
+    <div class="ph"><img class="cover" src="${photo(p)}" alt="${esc(p.title)}" loading="lazy" decoding="async">
       <span class="tagq ${p.qty_available ? '' : 'out'}">${p.qty_available ? p.qty_available + ' kaldı' : 'Tükendi'}</span>
       <div class="logo-c">${initial(b)}</div></div>
     <div class="body"><div class="top-row"><div class="nm">${esc(b.name)}</div>
       <button class="heart-o ${isFav(b.id) ? 'on' : ''}" data-fav="${b.id}" aria-label="Favorilere ekle veya çıkar" type="button">${ICON.heart}</button></div>
       <div class="ty">${esc(p.title)}</div>
-      <div class="when">Bugün teslim: ${hm(p.pickup_from)} - ${hm(p.pickup_to)} · ${dist(p).toFixed(1)} km</div>
-      <div class="pr"><s>${money(p.original_price)} ₺</s><b>${money(p.price)} ₺</b></div></div></article>`;
+      <div class="when">${timeLabel(p)} · ${fmtDist(dist(p))}</div>
+      <div class="pr"><s>${money(p.original_price)} ₺</s><b>${money(p.price)} ₺</b><i class="off">%${pct(p)}</i></div></div></article>`;
 }
 function rail(id, title, list) {
   if (!list.length) return '';
@@ -143,12 +177,13 @@ function render() {
     + rail('kafe', 'Kafeler', open.filter(p => p.businesses.type === 'kafe'))
     + rail('out', 'Tükenenler', list.filter(p => p.qty_available === 0))
     || '<p class="empty">Aramana uygun paket bulunamadı.</p>';
-  renderMap(list);
+  mapDirty = true; if ($('#tab-gozat').classList.contains('active')) renderMap(list);
   renderFavs();
 }
 
-function renderMap(list) {
-  layer.clearLayers();
+function renderMap(list = visible()) {
+  if (!map) return;
+  mapDirty = false; layer.clearLayers();
   list.forEach(p => {
     const b = p.businesses, out = !p.qty_available;
     const icon = L.divIcon({ className: '', iconSize: [0, 0],
@@ -161,25 +196,45 @@ function renderPick() {
   const p = bags.find(x => x.id === selId);
   $('#pick').innerHTML = p ? `<article class="card" data-id="${p.id}"><div class="ph"><img class="cover" src="${photo(p)}" alt="" loading="lazy"></div>
     <div class="body" style="padding:12px 14px"><span class="badge">${p.qty_available ? p.qty_available + ' kaldı' : 'Tükendi'}</span>
-    <div class="nm" style="margin-top:6px">${esc(p.businesses.name)}</div><div class="ty">${esc(p.title)} · ${dist(p).toFixed(1)} km</div>
-    <div class="when">Bugün ${hm(p.pickup_from)} - ${hm(p.pickup_to)}</div>
+    <div class="nm" style="margin-top:6px">${esc(p.businesses.name)}</div><div class="ty">${esc(p.title)} · ${fmtDist(dist(p))}</div>
+    <div class="when">${timeLabel(p)}</div>
     <div class="pr" style="margin-top:2px"><s>${money(p.original_price)} ₺</s><b>${money(p.price)} ₺</b></div></div></article>` : '';
 }
 function renderFavs() {
+  const el = $('#favs'); if (!el) return;
   const list = bags.filter(p => isFav(p.businesses.id));
-  $('#favs').innerHTML = list.length ? list.map(card).join('') : '<p class="empty">Henüz favorin yok. Kalbe dokunarak mekânları buraya ekle.</p>';
+  el.innerHTML = list.length ? list.map(card).join('') : '<p class="empty">Henüz favorin yok. Kalbe dokunarak mekânları buraya ekle.</p>';
 }
 
 // ---------- Sheet / sayfa ----------
-function sheet(html) { $('#sheetBody').innerHTML = html; $('#sheet').hidden = false; }
-const closeSheet = () => { $('#sheet').hidden = true; };
+// Panel ve sayfalar tarayıcı geçmişine işlenir; telefonun geri tuşu uygulamadan çıkarmadan bunları kapatır.
+let depth = 0, ignorePop = 0;
+const afterPop = [];
+const pushOverlay = () => { depth++; if (ignorePop) afterPop.push(() => history.pushState({ o: 1 }, '')); else history.pushState({ o: 1 }, ''); };
+const popOverlay = () => { if (depth > 0) { depth--; ignorePop++; history.back(); } };
 let dmap = null;
-const closePage = () => { if (dmap) { dmap.remove(); dmap = null; } $('#page').hidden = true; };
+function sheet(html) {
+  $('#sheetBody').innerHTML = html;
+  if ($('#sheet').hidden) { $('#sheet').hidden = false; pushOverlay(); }
+  const f = $('#sheetBody').querySelector('input,button'); if (f && !matchMedia('(pointer:coarse)').matches) f.focus();
+}
+function hideSheet() { $('#sheet').hidden = true; }
+function hidePage() { if (dmap) { dmap.remove(); dmap = null; } mapToken++; $('#page').hidden = true; }
+function closeSheet() { if (!$('#sheet').hidden) { hideSheet(); popOverlay(); } }
+function closePage() { if (!$('#page').hidden) { hidePage(); popOverlay(); } }
+function openPage() { if ($('#page').hidden) { $('#page').hidden = false; pushOverlay(); } }
+let mapToken = 0;
+window.addEventListener('popstate', () => {
+  if (ignorePop) { if (!--ignorePop) afterPop.splice(0).forEach(f => f()); return; }
+  if (depth > 0) depth--;
+  if (!$('#sheet').hidden) hideSheet(); else if (!$('#page').hidden) hidePage();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!$('#sheet').hidden) closeSheet(); else closePage(); } });
 $('.sheet-bg').onclick = closeSheet;
 
 function showList(id) {
   const s = SECTIONS[id]; if (!s) return;
-  const pg = $('#page'); pg.className = 'page'; pg.hidden = false;
+  const pg = $('#page'); pg.className = 'page'; openPage();
   pg.innerHTML = `<div class="l-head"><button class="circ" id="back" type="button" aria-label="Geri">${ICON.back}</button><div class="tt">${esc(s.title)}</div></div>
     <div class="l-body">${s.list.map(card).join('')}</div>`;
   $('#back').onclick = closePage;
@@ -192,27 +247,42 @@ function authSheet(msg) {
       <input name="email" type="email" required placeholder="E-posta" autocomplete="email" aria-label="E-posta">
       <input name="password" type="password" required minlength="6" placeholder="Şifre (en az 6 karakter)" autocomplete="current-password" aria-label="Şifre">
       <button class="btn" type="submit">Giriş yap</button>
-      <button class="btn sec" type="button" id="signup">Kayıt ol</button></form>
+      <button class="btn sec" type="button" id="signup">Kayıt ol</button>
+      <button class="linkbtn" type="button" id="forgot">Şifremi unuttum</button></form>
     <button class="btn sec" id="x" type="button">Kapat</button>`);
   $('#x').onclick = closeSheet;
   const creds = () => { const f = new FormData($('#authForm')); return { email: f.get('email'), password: f.get('password') }; };
   $('#authForm').onsubmit = async e => {
     e.preventDefault();
-    const { error } = await sb.auth.signInWithPassword(creds());
+    const btn = e.submitter; btn.disabled = true;
+    const { data, error } = await sb.auth.signInWithPassword(creds());
+    btn.disabled = false;
     if (error) return toast(error.message.includes('confirm') ? 'E-postanı doğrula' : 'E-posta veya şifre hatalı');
-    closeSheet(); toast('Giriş yapıldı');
+    afterAuth(data.user, 'Giriş yapıldı');
+  };
+  $('#forgot').onclick = async () => {
+    const email = new FormData($('#authForm')).get('email');
+    if (!email) return toast('Önce e-posta adresini yaz');
+    const { error } = await sb.auth.resetPasswordForEmail(email);
+    toast(error ? 'Gönderilemedi, tekrar dene' : 'Şifre yenileme bağlantısı e-postana gönderildi');
   };
   $('#signup').onclick = async () => {
     if (!$('#authForm').reportValidity()) return;
     const { data, error } = await sb.auth.signUp(creds());
     if (error) return toast(error.message);
-    if (!data.session) toast('Kayıt tamam. E-postanı doğrula.'); else { closeSheet(); toast('Hoş geldin!'); }
+    if (!data.session) toast('Kayıt tamam. E-postanı doğrula.'); else afterAuth(data.user, 'Hoş geldin!');
   };
+}
+// Girişten sonra yarım kalan rezervasyona kaldığı yerden devam et
+function afterAuth(u, msg) {
+  user = u; renderAuthBars(); closeSheet(); toast(msg);
+  const p = pending; pending = null;
+  if (p) setTimeout(() => confirmSheet(p.p, p.q), 250);
 }
 function renderAuthBars() {
   document.querySelectorAll('.authbar').forEach(el => {
     el.innerHTML = user
-      ? `<p class="muted">${esc(user.email)} · <a href="#" data-out style="color:var(--pink-d)">Çıkış</a></p>`
+      ? `<div class="me"><span class="av">${esc((user.email || '?')[0].toUpperCase())}</span><div><b>${esc(user.email)}</b><small>${myOrders.length} sipariş · ${favs.length} favori</small></div><button class="btn small sec" data-out type="button">Çıkış</button></div>`
       : `<button class="btn small" data-in type="button">Giriş yap / Kayıt ol</button>`;
   });
 }
@@ -220,11 +290,13 @@ sb.auth.onAuthStateChange((_ev, session) => {
   user = session?.user || null;
   renderAuthBars();
   setTimeout(() => { loadMyOrders(); loadMyBiz(); }, 0);
+  if (!user) pending = null;
 });
 function toggleFav(id) {
   favs = isFav(id) ? favs.filter(x => x !== id) : [...favs, id];
-  saveFavs(); render();
-  document.querySelectorAll(`#page [data-fav="${id}"]`).forEach(h => h.classList.toggle('on', isFav(id)));
+  saveFavs(); renderFavs(); renderAuthBars();
+  document.querySelectorAll(`[data-fav="${id}"]`).forEach(h => h.classList.toggle('on', isFav(id)));
+  toast(isFav(id) ? 'Favorilere eklendi' : 'Favorilerden çıkarıldı');
 }
 async function share(p) {
   const data = { title: p.businesses.name, text: `${p.title} · ${money(p.price)} ₺`, url: location.href };
@@ -237,7 +309,7 @@ function openBag(id) {
   const p = bags.find(x => x.id === id); if (!p) return;
   const b = p.businesses; let q = 1;
   const pg = $('#page'); if (dmap) { dmap.remove(); dmap = null; }
-  pg.className = 'page'; pg.hidden = false;
+  pg.className = 'page'; openPage();
   const heartC = `<button class="circ ${isFav(b.id) ? 'on' : ''}" data-fav="${b.id}" type="button" aria-label="Favorilere ekle veya çıkar">${ICON.heart}</button>`;
   const catName = PASTANE.test(p.title) ? 'Pastane' : KAHVALTI.test(p.title) ? 'Kahvaltı' : typeLabel(b);
   const info = esc(p.description) || 'Mekânın gün sonunda kalan lezzetli ürünleri.';
@@ -251,11 +323,11 @@ function openBag(id) {
         <div class="p-badges"><span class="tagq ${p.qty_available ? '' : 'out'}">${p.qty_available ? p.qty_available + ' kaldı' : 'Tükendi'}</span></div>
         <div class="p-name"><i>${initial(b)}</i>${esc(b.name)}</div></div>
       <div class="p-lines">
-        <div class="ln">${ICON.bag}<span>Sürpriz paket · ${esc(p.title)}</span></div>
-        <div class="ln">${ICON.clock}<span>Teslim: ${hm(p.pickup_from)} - ${hm(p.pickup_to)}</span><span class="pill-s">Bugün</span></div>
+        <div class="ln">${ICON.bag}<span>Sürpriz paket · ${esc(p.title)}</span><span class="pill-s off">%${pct(p)}</span></div>
+        <div class="ln">${ICON.clock}<span>Teslim: ${hm(p.pickup_from)} - ${hm(p.pickup_to)}</span><span class="pill-s">${isOpen(p) ? 'Şimdi' : 'Bugün'}</span></div>
       </div>
       <a class="p-addr" href="${routeUrl(b)}" target="_blank" rel="noopener">${ICON.pin}
-        <div class="a"><b>${esc(b.address) || 'Adres bilgisi yok'}</b><small>Mekân hakkında daha fazla bilgi · ${dist(p).toFixed(1)} km</small></div>${ICON.chevR}</a>
+        <div class="a"><b>${esc(b.address) || 'Adres bilgisi yok'}</b><small>${fmtDist(dist(p))} uzaklıkta</small></div>${ICON.chevR}</a>
       <div class="p-sec"><h4>Bu sürpriz paket hakkında</h4><p>${info}</p>
         <span class="chip-c"><img src="${photo(p)}" alt="">${catName}</span></div>
       <div class="p-sec"><h4>Yol tarifi</h4>
@@ -271,7 +343,7 @@ function openBag(id) {
   const drawCta = () => {
     $('#cta').innerHTML = p.qty_available
       ? `<div class="pc"><s>${money(p.original_price * q)} ₺</s><b>${money(p.price * q)} ₺</b></div>
-         <div class="qty-sm"><button id="m" type="button" aria-label="Azalt">−</button><span>${q}</span><button id="pl" type="button" aria-label="Artır">+</button></div>
+         <div class="qty-sm"><button id="m" type="button" aria-label="Azalt" ${q <= 1 ? 'disabled' : ''}>−</button><span aria-live="polite">${q}</span><button id="pl" type="button" aria-label="Artır" ${q >= Math.min(p.qty_available, 3) ? 'disabled' : ''}>+</button></div>
          <button class="btn coral" id="buy" type="button">Rezerve et</button>`
       : '<button class="btn" disabled type="button">Tükendi</button>';
     if (p.qty_available) {
@@ -285,15 +357,19 @@ function openBag(id) {
   $('#share').onclick = () => share(p); $('#share2').onclick = () => share(p);
   const sc = $('#pscroll'), bar = $('#pbar');
   sc.onscroll = () => bar.classList.toggle('show', sc.scrollTop > 150);
-  // küçük harita
-  dmap = L.map('dmap', { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, touchZoom: false, attributionControl: false }).setView([b.lat, b.lng], 16);
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(dmap);
-  L.circleMarker([b.lat, b.lng], { radius: 9, color: '#fff', weight: 3, fillColor: '#FFC93C', fillOpacity: 1 }).addTo(dmap);
+  // küçük harita: kütüphane yüklenince çizilir; sayfa o arada kapandıysa çizilmez
+  const tok = ++mapToken;
+  loadLeaflet().then(() => {
+    if (tok !== mapToken || !$('#dmap')) return;
+    dmap = L.map('dmap', { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, touchZoom: false, attributionControl: false }).setView([b.lat, b.lng], 16);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(dmap);
+    L.circleMarker([b.lat, b.lng], { radius: 9, color: '#fff', weight: 3, fillColor: '#FFC93C', fillOpacity: 1 }).addTo(dmap);
+  }).catch(() => { const m = $('#dmap'); if (m) m.remove(); });
 }
 
 // Kaydırarak onayla
 function confirmSheet(p, q) {
-  if (!user) return authSheet('Paket ayırmak için giriş yapmalısın.');
+  if (!user) { pending = { p, q }; return authSheet('Paket ayırmak için giriş yapmalısın.'); }
   sheet(`<h3>Siparişi onayla</h3>
     <p><b>${q}× ${esc(p.title)}</b><br><span class="muted">${esc(p.businesses.name)} · Bugün ${hm(p.pickup_from)} - ${hm(p.pickup_to)}</span></p>
     <p class="big">${money(p.price * q)} ₺</p>
@@ -303,19 +379,21 @@ function confirmSheet(p, q) {
   $('#x').onclick = closeSheet;
   const sw = $('#sw'), th = $('#th');
   let drag = false, x0 = 0, done = false;
+  sw.tabIndex = 0;
+  sw.onkeydown = async e => { if ((e.key === 'Enter' || e.key === ' ') && !done) { e.preventDefault(); done = true; sw.classList.add('busy'); await reserve(p, q); } };
   const max = () => sw.clientWidth - th.clientWidth - 10;
   th.onpointerdown = e => { drag = true; x0 = e.clientX; th.setPointerCapture(e.pointerId); };
   th.onpointermove = e => { if (drag) th.style.left = 5 + Math.min(max(), Math.max(0, e.clientX - x0)) + 'px'; };
   th.onpointerup = async () => {
     if (!drag) return; drag = false;
-    if (!done && parseFloat(th.style.left) - 5 > max() * 0.85) { done = true; await reserve(p, q); }
+    if (!done && parseFloat(th.style.left) - 5 > max() * 0.85) { done = true; th.style.left = max() + 5 + 'px'; sw.classList.add('busy'); await reserve(p, q); }
     else th.style.left = '5px';
   };
 }
 
 async function reserve(p, q) {
   const { data: o, error } = await sb.rpc('reserve_bag', { p_bag_id: p.id, p_qty: q });
-  if (error) { toast(error.message); closeSheet(); return loadBags(); }
+  if (error) { toast(/stock|stok|yeterli/i.test(error.message) ? 'Üzgünüz, paket az önce tükendi' : error.message); closeSheet(); return loadBags(); }
   closeSheet();
   await Promise.all([loadBags(), loadMyOrders()]);
   showCode(o, p);
@@ -324,8 +402,8 @@ async function reserve(p, q) {
 // Teslim kodu ekranı
 function showCode(o, p) {
   const b = p.businesses, pg = $('#page');
-  if (dmap) { dmap.remove(); dmap = null; }
-  pg.className = 'page teal'; pg.hidden = false;
+  if (dmap) { dmap.remove(); dmap = null; } mapToken++;
+  pg.className = 'page teal'; openPage();
   pg.innerHTML = `<button class="x" id="back" type="button" aria-label="Kapat">${ICON.close}</button>
     <div class="ready"><h2>Paketin hazır</h2><p>${esc(b.name)} · Bugün ${hm(p.pickup_from)} - ${hm(p.pickup_to)}</p></div>
     <div class="codecard"><div class="k">Teslim kodu</div><div class="codebox">${esc(o.code)}</div><hr>
@@ -340,13 +418,19 @@ function showCode(o, p) {
 // ---------- Siparişler ----------
 function renderOrders() {
   $('#orders').innerHTML = !user ? '<button class="btn small" data-in type="button">Giriş yap</button><p class="empty">Siparişlerini görmek için giriş yap.</p>'
-    : myOrders.length ? myOrders.map(o => {
-      const p = o.bags;
-      return `<div class="order" ${o.status === 'teslim' ? '' : `data-oid="${o.id}" style="cursor:pointer"`}><b>${esc(p.businesses.name)}</b>
-        <span class="muted">${o.qty}× ${esc(p.title)} · ${money(o.total)} ₺</span>
-        <span class="muted">Teslim: ${hm(p.pickup_from)} - ${hm(p.pickup_to)}</span>
-        ${o.status === 'teslim' ? '<span class="badge">Teslim alındı</span>' : `<div class="codebox">${esc(o.code)}</div>`}</div>`;
-    }).join('') : '<p class="empty">Henüz siparişin yok. Bir paket kurtar!</p>';
+    : myOrders.length ? (() => {
+      const one = o => {
+        const p = o.bags, done = o.status === 'teslim';
+        return `<div class="order" ${done ? '' : `data-oid="${o.id}" style="cursor:pointer"`}><b>${esc(p.businesses.name)}</b>
+          <span class="muted">${o.qty}× ${esc(p.title)} · ${money(o.total)} ₺</span>
+          <span class="muted">Teslim: ${hm(p.pickup_from)} - ${hm(p.pickup_to)} · ${new Date(o.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}</span>
+          ${done ? '<span class="badge">Teslim alındı</span>' : `<span class="muted">Kodu mekâna göstermek için dokun</span><div class="codebox">${esc(o.code)}</div>`}</div>`;
+      };
+      const act = myOrders.filter(o => o.status !== 'teslim'), past = myOrders.filter(o => o.status === 'teslim');
+      return (act.length ? `<h3 class="sub" style="margin-top:0">Aktif</h3>${act.map(one).join('')}` : '')
+        + (past.length ? `<h3 class="sub">Geçmiş</h3>${past.map(one).join('')}` : '');
+    })() : '<p class="empty">Henüz siparişin yok. Bir paket kurtar!</p>';
+  renderAuthBars();
 }
 
 // ---------- İşletme paneli ----------
@@ -371,12 +455,15 @@ async function renderBiz() {
       <input name="name" required placeholder="İşletme adı" aria-label="İşletme adı">
       <select name="type" aria-label="Tür"><option value="restoran">Restoran / Lokanta</option><option value="kafe">Kafe</option></select>
       <input name="address" placeholder="Adres" aria-label="Adres">
-      <p class="muted">Konum: Gözat sekmesinde haritayı mekânının üzerine getir, sonra buraya dönüp kaydet. Harita merkezi kullanılır.</p>
+      <button class="btn sec" id="bizLoc" type="button">Konumumu kullan</button>
+      <p class="muted" id="bizLocNote">Mekânda isen "Konumumu kullan"a bas. Aksi hâlde seçili konum (${esc($('#locName').textContent)}) kullanılır.</p>
       <button class="btn" type="submit">Kaydet</button></form>`;
+    let bizPos = null;
+    $('#bizLoc').onclick = () => getPosition(c => { bizPos = c; $('#bizLocNote').textContent = 'Konum alındı ✓'; });
     $('#bizForm').onsubmit = async e => {
       e.preventDefault();
-      const f = Object.fromEntries(new FormData(e.target)), c = map.getCenter();
-      const { error } = await sb.from('businesses').insert({ owner_id: user.id, name: f.name, type: f.type, address: f.address, lat: c.lat, lng: c.lng });
+      const f = Object.fromEntries(new FormData(e.target)), c = bizPos || me;
+      const { error } = await sb.from('businesses').insert({ owner_id: user.id, name: f.name, type: f.type, address: f.address, lat: c[0], lng: c[1] });
       if (error) return toast(error.message);
       toast('İşletme kaydedildi'); await loadMyBiz(); loadBags();
     };
@@ -420,13 +507,22 @@ async function renderBiz() {
 function setTab(name) {
   document.querySelectorAll('.tabbar button').forEach(x => x.classList.toggle('on', x.dataset.t === name));
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-' + name));
-  closePage();
-  if (name === 'gozat') setTimeout(() => { map.invalidateSize(); map.setView(me, 14); }, 50);
+  closePage(); closeSheet();
+  if (name === 'gozat') {
+    ensureMap().then(() => { map.invalidateSize(); map.setView(me, 14); if (mapDirty) renderMap(); })
+      .catch(() => toast('Harita yüklenemedi'));
+  }
 }
 document.querySelectorAll('.tabbar button').forEach(btn => btn.onclick = () => setTab(btn.dataset.t));
 $('#toList').onclick = () => setTab('kesfet');
 $('#locBtn').onclick = locSheet;
-$('#q').oninput = e => { query = e.target.value; render(); };
+// İki arama kutusu (Keşfet ve Gözat) birbirine bağlı; yazarken liste her tuşta değil, kısa bir beklemeden sonra yenilenir
+let qTimer;
+const onSearch = e => {
+  query = e.target.value; $('#q').value = $('#q0').value = query;
+  clearTimeout(qTimer); qTimer = setTimeout(render, 160);
+};
+$('#q').oninput = $('#q0').oninput = onSearch;
 $('#cats').onclick = e => {
   const b = e.target.closest('button[data-c]'); if (!b) return; cat = b.dataset.c;
   document.querySelectorAll('#cats button').forEach(x => x.classList.toggle('on', x === b)); render();
@@ -434,10 +530,18 @@ $('#cats').onclick = e => {
 document.addEventListener('click', async e => {
   const t = e.target;
   if (t.closest('[data-in]')) return authSheet();
-  if (t.matches('[data-out]')) { e.preventDefault(); return sb.auth.signOut(); }
+  if (t.closest('[data-out]')) { e.preventDefault(); return sb.auth.signOut(); }
+  if (t.closest('[data-retry]')) return loadBags();
+  const ap = t.closest('[data-addplace]');
+  if (ap) return getPosition(c => { places[ap.dataset.addplace] = c; savePlaces(); setLocation(c, PLACE_NAME[ap.dataset.addplace], ap.dataset.addplace); closeSheet(); toast('Konum kaydedildi'); });
   const loc = t.closest('[data-loc]');
-  if (loc) { if (loc.dataset.loc === 'preset') { setLocation(DEFAULT_LOC, 'Kadıköy', 'preset'); closeSheet(); } else useCurrentLocation(); return; }
-  if (t.closest('[data-soon]')) return toast('Kayıtlı konumlar yakında');
+  if (loc) {
+    const k = loc.dataset.loc;
+    if (k === 'preset') { setLocation(DEFAULT_LOC, 'Kadıköy', 'preset'); closeSheet(); }
+    else if (k === 'current') useCurrentLocation();
+    else if (places[k]) { setLocation(places[k], PLACE_NAME[k], k); closeSheet(); }
+    return;
+  }
   const all = t.closest('[data-all]');
   if (all) return showList(all.dataset.all);
   const fav = t.closest('[data-fav]');
@@ -450,6 +554,7 @@ document.addEventListener('click', async e => {
 $('#tab-profil').addEventListener('click', async e => {
   const del = e.target.dataset.del, ok = e.target.dataset.ok;
   if (del) {
+    if (!confirm('Bu paketi kaldırmak istiyor musun?')) return;
     const { error } = await sb.from('bags').delete().eq('id', del);
     if (error) toast('Siparişi olan paket silinemez'); else { renderBiz(); loadBags(); }
   }
@@ -463,3 +568,7 @@ $('#tab-profil').addEventListener('click', async e => {
 
 renderAuthBars();
 loadBags();
+// Uygulama arka plandan dönünce ve her 2 dakikada bir paketleri yenile (stok, süre ve gün değişimi için)
+document.addEventListener('visibilitychange', () => { if (!document.hidden) loadBags(); });
+setInterval(() => { if (!document.hidden) loadBags(); }, 120000);
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});

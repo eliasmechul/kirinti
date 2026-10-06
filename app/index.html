@@ -5,9 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#FFC93C">
 <title>Kırıntı</title>
+<meta name="description" content="Kırıntı: mahalledeki restoran ve kafelerin kapanış öncesi artan yemeklerini uygun fiyata kurtar.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kırıntı">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="../assets/logo/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&display=swap">
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
@@ -23,6 +30,10 @@
             <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
           </button>
           <h1 class="hero-h"><span>Yakınındaki</span>Sürpriz Paketler</h1>
+          <label class="search"><span class="sr">Ara</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+            <input id="q0" type="search" placeholder="Restoran, kafe veya yemek ara" enterkeyhint="search">
+          </label>
         </div>
         <div class="cats" id="cats" role="group" aria-label="Kategoriler">
           <button type="button" data-c="hepsi" class="on"><img src="../assets/visuals/croissant.svg" alt=""><span>Hepsi</span></button>
@@ -42,7 +53,7 @@
       <div class="map-top">
         <label class="map-search"><span class="sr">Ara</span>
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-          <input id="q" type="search" placeholder="Restoran, kafe veya yemek ara">
+          <input id="q" type="search" placeholder="Restoran, kafe veya yemek ara" enterkeyhint="search">
         </label>
         <button type="button" class="map-list" id="toList">Liste</button>
       </div>
@@ -70,8 +81,10 @@
       <div class="scroll pad">
         <h2 class="h">Profil</h2>
         <div class="authbar"></div>
-        <h3 class="sub">İşletme paneli</h3>
-        <div id="bizRoot"></div>
+        <details class="bizbox" id="bizBox">
+          <summary>İşletme paneli <small>Restoran veya kafe sahibi misin?</small></summary>
+          <div id="bizRoot"></div>
+        </details>
       </div>
     </section>
   </main>
@@ -84,15 +97,14 @@
     <button data-t="profil" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-5 15-5 16 0"/></svg>Profil</button>
   </nav>
 
-  <div id="page" class="page" hidden></div>
-  <div id="sheet" class="sheet" hidden>
+  <div id="page" class="page" role="dialog" aria-modal="true" aria-label="Ayrıntılar" hidden></div>
+  <div id="sheet" class="sheet" role="dialog" aria-modal="true" aria-label="Panel" hidden>
     <div class="sheet-bg"></div>
     <div class="sheet-body" id="sheetBody"></div>
   </div>
   <div id="toast" role="status" aria-live="polite"></div>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+<script src="app.js" defer></script>
 </body>
 </html>
