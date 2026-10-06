@@ -197,3 +197,47 @@ svg.i{width:22px;height:22px;flex:none;fill:none;stroke:var(--ink);stroke-width:
 .swipe span{pointer-events:none;padding-left:44px;font-size:15px}
 #toast{position:absolute;left:50%;bottom:84px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 20px;border-radius:999px;font-weight:700;font-size:14px;opacity:0;pointer-events:none;transition:.3s;z-index:4000;max-width:90%;text-align:center}
 #toast.show{opacity:1}
+
+/* ===== Modern görünüm: büyük başlık, tam görselli kartlar, yüzen menü ===== */
+.scroll{padding-bottom:104px}
+.loc-row{padding:14px 20px 4px}
+.hero-h{font-size:36px;line-height:1.05;font-weight:300;letter-spacing:-.025em;color:var(--ink);margin:14px 0 8px}
+.hero-h span{display:block;color:#2B2E1A80}
+.cats{gap:10px;padding:10px 20px 24px;border-radius:0 0 32px 32px}
+.cats button{display:flex;align-items:center;gap:8px;width:auto;padding:5px 15px 5px 5px;border-radius:999px;background:#ffffffa6;white-space:nowrap}
+.cats img{width:32px;height:32px;margin:0;border:0;box-shadow:none}
+.cats span{display:inline;font-size:14px;font-weight:500}
+.cats .on{background:var(--ink)}
+.cats .on span{color:#fff;font-weight:500}
+.cats .on img{box-shadow:none}
+.sec-h{padding:22px 20px 12px}
+.sec-h h3{font-weight:500;font-size:22px;letter-spacing:-.015em}
+.sec-h button{text-decoration:none;background:var(--pink-l);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:500}
+.rail .card,.grid .card{position:relative;height:330px;border-radius:30px;overflow:hidden;color:#fff;background:#2b2e1a;box-shadow:0 12px 30px #2B2E1A26}
+.rail .card{width:280px}
+.rail .card .ph,.grid .card .ph{position:absolute;inset:0;height:auto;border-radius:0;background:none}
+.rail .card .ph img.cover,.grid .card .ph img.cover{border-radius:0}
+.rail .card .ph::after,.grid .card .ph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#0000 38%,#1a2008e6 100%)}
+.rail .tagq,.grid .tagq{z-index:2;left:14px;top:14px}
+.rail .logo-c,.grid .logo-c{display:none}
+.rail .card .body,.grid .card .body{position:absolute;left:0;right:0;bottom:0;padding:18px;z-index:2;gap:3px}
+.rail .nm,.grid .nm{font-size:22px;font-weight:500;letter-spacing:-.015em;color:#fff}
+.rail .ty,.grid .ty,.rail .when,.grid .when{color:#ffffffcc;font-size:13px}
+.rail .pr,.grid .pr{text-align:left;margin-top:10px;display:flex;align-items:center;gap:10px}
+.rail .pr s,.grid .pr s{color:#ffffffa6;margin:0}
+.rail .pr b,.grid .pr b{color:var(--ink);background:var(--pink);border-radius:999px;padding:6px 16px;font-size:16px}
+.rail .heart-o,.grid .heart-o{background:#ffffff33;border-radius:50%;margin:0;backdrop-filter:blur(8px)}
+.rail .heart-o svg,.grid .heart-o svg{stroke:#fff;width:20px;height:20px}
+.rail .heart-o.on svg,.grid .heart-o.on svg{fill:var(--pink);stroke:var(--pink)}
+.tabbar{position:absolute;z-index:1000;left:14px;right:14px;bottom:calc(12px + env(safe-area-inset-bottom));border:0;border-radius:999px;padding:6px;background:#ffffffd9;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 10px 30px #2B2E1A33}
+.tabbar button{border-radius:999px;min-height:52px;gap:2px}
+.tabbar .on{background:var(--pink);color:var(--ink)}
+.tabbar button[data-t=kesfet].on svg{fill:var(--ink);stroke:var(--pink)}
+.tabbar button[data-t=kesfet].on svg circle{stroke:var(--ink)}
+.tabbar button[data-t=kesfet].on svg path{stroke:var(--pink);fill:var(--pink)}
+#pick{bottom:92px}
+#toast{bottom:100px}
+.p-hero{border-radius:0 0 32px 32px;overflow:hidden}
+.p-name{font-weight:500;letter-spacing:-.015em}
+.h{font-weight:300;font-size:34px;letter-spacing:-.025em}
+.rail{scroll-padding:0 20px}
