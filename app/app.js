@@ -34,7 +34,7 @@ const ICON = {
 };
 
 const DEFAULT_LOC = [40.9908, 29.0290];
-let user = null, bags = [], myOrders = [], myBiz = null, pending = null;
+let user = null, bags = [], myOrders = [], myBiz = null, pending = null, ratings = {}, myReviews = {};
 let cat = 'hepsi', query = '', me = DEFAULT_LOC, locMode = 'preset', selId = null;
 let favs = [], SECTIONS = {};
 try { favs = JSON.parse(localStorage.getItem('kirinti_fav') || '[]'); } catch {}
@@ -47,6 +47,7 @@ const typeLabel = b => b.type === 'kafe' ? 'Kafe' : 'Restoran';
 const dist = p => p._d ??= km(me, [p.businesses.lat, p.businesses.lng]);
 const fmtDist = d => d < 1 ? `${Math.max(50, Math.round(d * 10) * 100)} m` : `${d.toFixed(1)} km`;
 const pct = p => Math.round((1 - p.price / p.original_price) * 100);
+const stars = id => ratings[id] ? `★ ${Number(ratings[id].avg_rating).toFixed(1).replace('.', ',')} (${ratings[id].n})` : '';
 const timeLabel = p => isOpen(p) ? 'Şimdi teslim alınabilir' : ended(p) ? 'Süre doldu' : `Bugün ${hm(p.pickup_from)} - ${hm(p.pickup_to)}`;
 const isFav = id => favs.includes(id);
 const routeUrl = b => `https://www.google.com/maps/dir/?api=1&destination=${b.lat},${b.lng}`;
@@ -106,7 +107,11 @@ const skeleton = () => `<div class="rail">${'<div class="card sk"></div>'.repeat
 function loadBags() {
   return loadingBags ||= (async () => {
     if (!loaded) $('#sections').innerHTML = `<div class="sec-h"><h3>Paketler yükleniyor…</h3></div>${skeleton()}`;
-    const { data, error } = await sb.from('bags').select('*, businesses(*)').eq('pickup_date', todayTR());
+    const [{ data, error }, { data: rt }] = await Promise.all([
+      sb.from('bags').select('*, businesses(*)').eq('pickup_date', todayTR()),
+      sb.from('business_ratings').select('*'),
+    ]);
+    ratings = Object.fromEntries((rt || []).map(r => [r.business_id, r]));
     if (error) {
       if (!loaded) $('#sections').innerHTML = '<div class="empty"><p>Paketler yüklenemedi. İnternet bağlantını kontrol et.</p><button class="btn small" data-retry type="button" style="margin-top:12px">Tekrar dene</button></div>';
       else toast('Paketler güncellenemedi');
@@ -117,8 +122,11 @@ function loadBags() {
 }
 async function loadMyOrders() {
   if (!user) { myOrders = []; return renderOrders(); }
-  const { data } = await sb.from('orders').select('*, bags(title, pickup_from, pickup_to, price, businesses(name, address, lat, lng))').eq('customer_id', user.id).order('created_at', { ascending: false });
-  myOrders = data || []; renderOrders();
+  const [{ data }, { data: rv }] = await Promise.all([
+    sb.from('orders').select('*, bags(title, pickup_date, pickup_from, pickup_to, price, original_price, businesses(id, name, address, lat, lng))').eq('customer_id', user.id).order('created_at', { ascending: false }),
+    sb.from('reviews').select('order_id, rating').eq('customer_id', user.id),
+  ]);
+  myOrders = data || []; myReviews = Object.fromEntries((rv || []).map(r => [r.order_id, r.rating])); renderOrders();
 }
 async function loadMyBiz() {
   if (!user) { myBiz = null; return renderBiz(); }
@@ -152,7 +160,7 @@ function card(p) {
       <div class="logo-c">${initial(b)}</div></div>
     <div class="body"><div class="top-row"><div class="nm">${esc(b.name)}</div>
       <button class="heart-o ${isFav(b.id) ? 'on' : ''}" data-fav="${b.id}" aria-label="Favorilere ekle veya çıkar" type="button">${ICON.heart}</button></div>
-      <div class="ty">${esc(p.title)}</div>
+      <div class="ty">${esc(p.title)}${stars(b.id) ? ` · <span class="star">${stars(b.id)}</span>` : ''}</div>
       <div class="when">${timeLabel(p)} · ${fmtDist(dist(p))}</div>
       <div class="pr"><s>${money(p.original_price)} ₺</s><b>${money(p.price)} ₺</b><i class="off">%${pct(p)}</i></div></div></article>`;
 }
@@ -282,18 +290,28 @@ function afterAuth(u, msg) {
 function renderAuthBars() {
   document.querySelectorAll('.authbar').forEach(el => {
     el.innerHTML = user
-      ? `<div class="me"><span class="av">${esc((user.email || '?')[0].toUpperCase())}</span><div><b>${esc(user.email)}</b><small>${myOrders.length} sipariş · ${favs.length} favori</small></div><button class="btn small sec" data-out type="button">Çıkış</button></div>`
+      ? `<div class="me"><span class="av">${esc((user.email || '?')[0].toUpperCase())}</span><div><b>${esc(user.email)}</b><small>${myOrders.length} sipariş · ${favs.length} favori</small></div><button class="btn small sec" data-out type="button">Çıkış</button></div>${(() => { const m = impact(); return m.meals ? `<div class="impact"><div><b>${m.meals}</b><small>öğün kurtardın</small></div><div><b>${money(m.saved)} ₺</b><small>tasarruf</small></div><div><b>${m.co2.toFixed(1).replace('.', ',')} kg</b><small>CO₂ azaldı*</small></div><p>*Kurtarılan öğün başına ortalama 2,5 kg CO₂e varsayımıyla.</p></div>` : ''; })()}`
       : `<button class="btn small" data-in type="button">Giriş yap / Kayıt ol</button>`;
   });
+}
+// Giriş yapınca cihazdaki favorilerle hesaptaki favorileri birleştir
+async function syncFavs() {
+  if (!user) return;
+  const { data } = await sb.from('favorites').select('business_id');
+  const remote = (data || []).map(r => r.business_id), merged = [...new Set([...remote, ...favs])];
+  const add = merged.filter(x => !remote.includes(x));
+  if (add.length) await sb.from('favorites').insert(add.map(id => ({ user_id: user.id, business_id: id })));
+  favs = merged; saveFavs(); render(); renderAuthBars();
 }
 sb.auth.onAuthStateChange((_ev, session) => {
   user = session?.user || null;
   renderAuthBars();
-  setTimeout(() => { loadMyOrders(); loadMyBiz(); }, 0);
+  setTimeout(() => { loadMyOrders(); loadMyBiz(); syncFavs(); }, 0);
   if (!user) pending = null;
 });
 function toggleFav(id) {
   favs = isFav(id) ? favs.filter(x => x !== id) : [...favs, id];
+  if (user) (isFav(id) ? sb.from('favorites').insert({ user_id: user.id, business_id: id }) : sb.from('favorites').delete().eq('business_id', id)).then(() => {});
   saveFavs(); renderFavs(); renderAuthBars();
   document.querySelectorAll(`[data-fav="${id}"]`).forEach(h => h.classList.toggle('on', isFav(id)));
   toast(isFav(id) ? 'Favorilere eklendi' : 'Favorilerden çıkarıldı');
@@ -324,6 +342,7 @@ function openBag(id) {
         <div class="p-name"><i>${initial(b)}</i>${esc(b.name)}</div></div>
       <div class="p-lines">
         <div class="ln">${ICON.bag}<span>Sürpriz paket · ${esc(p.title)}</span><span class="pill-s off">%${pct(p)}</span></div>
+        ${stars(b.id) ? `<div class="ln"><span class="star">${stars(b.id)}</span><span class="muted">değerlendirme</span></div>` : ''}
         <div class="ln">${ICON.clock}<span>Teslim: ${hm(p.pickup_from)} - ${hm(p.pickup_to)}</span><span class="pill-s">${isOpen(p) ? 'Şimdi' : 'Bugün'}</span></div>
       </div>
       <a class="p-addr" href="${routeUrl(b)}" target="_blank" rel="noopener">${ICON.pin}
@@ -334,6 +353,7 @@ function openBag(id) {
         <div style="display:flex;gap:10px;align-items:center;font-size:15px">${ICON.pin}<span>${esc(b.address) || 'Kadıköy, İstanbul'}</span></div>
         <div id="dmap"></div>
         <a class="btn line" style="margin-top:12px" href="${routeUrl(b)}" target="_blank" rel="noopener">Rotayı göster</a></div>
+      <div class="p-sec" id="revs" hidden><h4>Yorumlar</h4><div id="revList"></div></div>
       <div class="p-sec"><h4>Teslim bilgisi</h4><p>Siparişini ve teslim kodunu mekândaki bir çalışana göstererek sürpriz paketini teslim al.</p></div>
       <div class="p-sec"><h4>Ambalaj</h4><div class="tip">Kendi çantanı veya kabını getirmeni öneririz.</div>
         <details><summary>İçindekiler ve alerjenler ${ICON.chevD}</summary><p style="padding:6px 0 10px">${info}</p></details></div>
@@ -357,6 +377,11 @@ function openBag(id) {
   $('#share').onclick = () => share(p); $('#share2').onclick = () => share(p);
   const sc = $('#pscroll'), bar = $('#pbar');
   sc.onscroll = () => bar.classList.toggle('show', sc.scrollTop > 150);
+  sb.from('reviews').select('rating, comment, created_at').eq('business_id', b.id).not('comment', 'is', null).order('created_at', { ascending: false }).limit(3).then(({ data }) => {
+    if (!data?.length || !$('#revList')) return;
+    $('#revs').hidden = false;
+    $('#revList').innerHTML = data.map(r => `<div class="rev"><span class="star">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span><p>${esc(r.comment)}</p></div>`).join('');
+  });
   // küçük harita: kütüphane yüklenince çizilir; sayfa o arada kapandıysa çizilmez
   const tok = ++mapToken;
   loadLeaflet().then(() => {
@@ -416,21 +441,65 @@ function showCode(o, p) {
 }
 
 // ---------- Siparişler ----------
+const canCancel = o => {
+  const g = o.bags; if (o.status !== 'bekliyor') return false;
+  return g.pickup_date > todayTR() || (g.pickup_date === todayTR() && nowTR() < hm(g.pickup_from));
+};
+const orderDone = o => o.status !== 'bekliyor' || (o.bags.pickup_date < todayTR() || (o.bags.pickup_date === todayTR() && nowTR() > hm(o.bags.pickup_to)));
+function impact() {
+  const got = myOrders.filter(o => o.status === 'teslim');
+  const meals = got.reduce((a, o) => a + o.qty, 0);
+  const saved = got.reduce((a, o) => a + (o.bags.original_price - o.bags.price) * o.qty, 0);
+  return { meals, saved, co2: meals * 2.5 };
+}
+function orderCard(o) {
+  const p = o.bags, live = !orderDone(o);
+  const when = `Teslim: ${hm(p.pickup_from)} - ${hm(p.pickup_to)} · ${new Date(o.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}`;
+  let foot = '';
+  if (o.status === 'teslim') foot = `<span class="badge">Teslim alındı</span>` + (myReviews[o.id]
+    ? `<span class="star">${'★'.repeat(myReviews[o.id])}${'☆'.repeat(5 - myReviews[o.id])}</span>`
+    : `<div><button class="btn small" data-rate="${o.id}" type="button">Puanla</button></div>`);
+  else if (o.status === 'iptal') foot = '<span class="badge off">İptal edildi · iade edilecek</span>';
+  else if (o.status === 'gelmedi' || !live) foot = '<span class="badge off">Teslim alınmadı</span>';
+  else foot = `<span class="muted">Kodu mekâna göstermek için dokun</span><div class="codebox">${esc(o.code)}</div>`
+    + (canCancel(o) ? `<div><button class="btn small sec" data-cancel="${o.id}" type="button">Siparişi iptal et</button></div>` : '');
+  return `<div class="order" ${live ? `data-oid="${o.id}" style="cursor:pointer"` : ''}><b>${esc(p.businesses.name)}</b>
+    <span class="muted">${o.qty}× ${esc(p.title)} · ${money(o.total)} ₺</span><span class="muted">${when}</span>${foot}</div>`;
+}
 function renderOrders() {
   $('#orders').innerHTML = !user ? '<button class="btn small" data-in type="button">Giriş yap</button><p class="empty">Siparişlerini görmek için giriş yap.</p>'
     : myOrders.length ? (() => {
-      const one = o => {
-        const p = o.bags, done = o.status === 'teslim';
-        return `<div class="order" ${done ? '' : `data-oid="${o.id}" style="cursor:pointer"`}><b>${esc(p.businesses.name)}</b>
-          <span class="muted">${o.qty}× ${esc(p.title)} · ${money(o.total)} ₺</span>
-          <span class="muted">Teslim: ${hm(p.pickup_from)} - ${hm(p.pickup_to)} · ${new Date(o.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}</span>
-          ${done ? '<span class="badge">Teslim alındı</span>' : `<span class="muted">Kodu mekâna göstermek için dokun</span><div class="codebox">${esc(o.code)}</div>`}</div>`;
-      };
-      const act = myOrders.filter(o => o.status !== 'teslim'), past = myOrders.filter(o => o.status === 'teslim');
-      return (act.length ? `<h3 class="sub" style="margin-top:0">Aktif</h3>${act.map(one).join('')}` : '')
-        + (past.length ? `<h3 class="sub">Geçmiş</h3>${past.map(one).join('')}` : '');
+      const act = myOrders.filter(o => !orderDone(o)), past = myOrders.filter(orderDone);
+      return (act.length ? `<h3 class="sub" style="margin-top:0">Aktif</h3>${act.map(orderCard).join('')}` : '')
+        + (past.length ? `<h3 class="sub">Geçmiş</h3>${past.map(orderCard).join('')}` : '');
     })() : '<p class="empty">Henüz siparişin yok. Bir paket kurtar!</p>';
   renderAuthBars();
+}
+async function cancelOrder(id) {
+  if (!confirm('Siparişi iptal etmek istiyor musun? Ödemen iade edilir.')) return;
+  const { error } = await sb.rpc('cancel_order', { p_order_id: id });
+  if (error) return toast(error.message);
+  toast('Sipariş iptal edildi'); await Promise.all([loadMyOrders(), loadBags()]);
+}
+function rateSheet(id) {
+  const o = myOrders.find(x => x.id === id); if (!o) return;
+  let r = 0;
+  sheet(`<h3>${esc(o.bags.businesses.name)}</h3><p class="muted" style="text-align:center">Paketini nasıl buldun?</p>
+    <div class="stars-in" id="starsIn" role="radiogroup" aria-label="Puan">${[1, 2, 3, 4, 5].map(n => `<button type="button" data-s="${n}" role="radio" aria-checked="false" aria-label="${n} yıldız">★</button>`).join('')}</div>
+    <textarea id="rcomment" class="rtext" maxlength="300" placeholder="Yorum (isteğe bağlı)" aria-label="Yorum"></textarea>
+    <button class="btn" id="rsend" type="button" disabled>Gönder</button><button class="btn sec" id="x" type="button">Vazgeç</button>`);
+  $('#x').onclick = closeSheet;
+  $('#starsIn').onclick = e => {
+    const b = e.target.closest('[data-s]'); if (!b) return; r = +b.dataset.s;
+    document.querySelectorAll('#starsIn button').forEach(x => { const on = +x.dataset.s <= r; x.classList.toggle('on', on); x.setAttribute('aria-checked', +x.dataset.s === r); });
+    $('#rsend').disabled = false;
+  };
+  $('#rsend').onclick = async () => {
+    $('#rsend').disabled = true;
+    const { error } = await sb.rpc('rate_order', { p_order_id: id, p_rating: r, p_comment: $('#rcomment').value });
+    if (error) { $('#rsend').disabled = false; return toast(error.message); }
+    closeSheet(); toast('Teşekkürler!'); loadMyOrders(); loadBags();
+  };
 }
 
 // ---------- İşletme paneli ----------
@@ -447,6 +516,8 @@ async function uploadPhoto(file, bizId) {
   return sb.storage.from('photos').getPublicUrl(path).data.publicUrl;
 }
 
+const DAYS = { all: [1, 2, 3, 4, 5, 6, 7], wd: [1, 2, 3, 4, 5], we: [6, 7] };
+const dayLabel = a => a.length === 7 ? 'Her gün' : a.join() === '1,2,3,4,5' ? 'Hafta içi' : a.join() === '6,7' ? 'Hafta sonu' : a.map(d => 'PztSalÇarPerCumCmtPaz'.slice((d - 1) * 3, d * 3)).join(' ');
 async function renderBiz() {
   const root = $('#bizRoot');
   if (!user) return root.innerHTML = '<p class="muted">İşletme paneli için giriş yap.</p>';
@@ -469,37 +540,60 @@ async function renderBiz() {
     };
     return;
   }
-  const [{ data: mine }, { data: ords }] = await Promise.all([
+  await sb.rpc('publish_my_templates');   // bugünün tekrarlayan paketlerini yayınla
+  const [{ data: mine }, { data: ords }, { data: tpls }, { data: st }] = await Promise.all([
     sb.from('bags').select('*').eq('business_id', myBiz.id).eq('pickup_date', todayTR()),
-    sb.from('orders').select('*, bags!inner(title, business_id)').eq('bags.business_id', myBiz.id).order('created_at', { ascending: false }),
+    sb.from('orders').select('*, bags!inner(title, business_id, pickup_date)').eq('bags.business_id', myBiz.id).order('created_at', { ascending: false }).limit(40),
+    sb.from('bag_templates').select('*').eq('business_id', myBiz.id).order('created_at'),
+    sb.rpc('business_stats', { p_business: myBiz.id }),
   ]);
+  const t = st || {};
+  const tile = (v, l) => `<div><b>${v}</b><small>${l}</small></div>`;
+  const live = (ords || []).filter(o => o.status === 'bekliyor'), past = (ords || []).filter(o => o.status !== 'bekliyor');
   root.innerHTML = `<p><b>${esc(myBiz.name)}</b> <span class="muted">· ${esc(myBiz.address)}</span></p>
+    <div class="stats">${tile(t.today_orders ?? 0, 'bugün sipariş')}${tile(t.today_delivered ?? 0, 'bugün teslim')}${tile(money(t.today_revenue ?? 0) + ' ₺', 'bugünkü kazanç')}${tile(t.total_meals ?? 0, 'kurtarılan öğün')}${tile(t.avg_rating ? '★ ' + String(t.avg_rating).replace('.', ',') : '–', (t.reviews ?? 0) + ' yorum')}${tile(t.no_shows ?? 0, 'gelmeyen')}</div>
+    <p class="muted" style="margin-top:8px">Kazanç, %30 komisyon düşüldükten sonraki tutardır (ödeme henüz simüle).</p>
     <form id="bagForm" class="form"><h3>Yeni sürpriz paket</h3>
       <input name="title" required placeholder="Paket adı (örn. Akşam Yemeği Paketi)" aria-label="Paket adı">
       <input name="desc" placeholder="Kısa açıklama / alerjen bilgisi" aria-label="Açıklama">
       <div class="row2"><input name="orig" type="number" min="1" required placeholder="Normal ₺" aria-label="Normal fiyat"><input name="price" type="number" min="1" required placeholder="İndirimli ₺" aria-label="İndirimli fiyat"></div>
       <div class="row2"><input name="qty" type="number" min="1" max="50" required placeholder="Adet" aria-label="Adet"><input name="from" type="time" required value="21:00" aria-label="Başlangıç"><input name="to" type="time" required value="22:00" aria-label="Bitiş"></div>
+      <label class="f">Tekrar<select name="repeat"><option value="none">Yalnızca bugün</option><option value="all">Her gün</option><option value="wd">Hafta içi</option><option value="we">Hafta sonu</option></select></label>
       <label class="f">Paket fotoğrafı (isteğe bağlı)<input name="photo" type="file" accept="image/jpeg,image/png,image/webp"></label>
       <button class="btn" type="submit">Yayınla</button></form>
+    ${(tpls || []).length ? `<h3 class="sub">Tekrarlayan paketler</h3>${tpls.map(x => `<div class="order"><b>${esc(x.title)}</b>
+      <span class="muted">${dayLabel(x.weekdays)} · ${hm(x.pickup_from)} - ${hm(x.pickup_to)} · ${x.qty} adet · ${money(x.price)} ₺</span>
+      <div class="row2"><button class="btn small sec" data-tact="${x.id}" data-on="${x.active}" type="button">${x.active ? 'Duraklat' : 'Devam ettir'}</button><button class="btn small sec" data-tdel="${x.id}" type="button">Sil</button></div></div>`).join('')}` : ''}
     <h3 class="sub">Bugünkü paketler</h3>
     ${(mine || []).map(p => `<div class="order"><b>${esc(p.title)}</b>
       <span class="muted">${money(p.price)} ₺ (normal ${money(p.original_price)} ₺) · ${hm(p.pickup_from)} - ${hm(p.pickup_to)} · ${p.qty_available} adet kaldı</span>
       <div><button class="btn small sec" data-del="${p.id}" type="button">Kaldır</button></div></div>`).join('') || '<p class="muted">Aktif paket yok.</p>'}
-    <h3 class="sub">Siparişler</h3>
-    ${(ords || []).map(o => `<div class="order"><b>${o.qty}× ${esc(o.bags.title)}</b>
-      ${o.status === 'teslim' ? '<span class="badge">Teslim edildi</span>' :
-        `<div class="row2"><input data-code="${o.id}" placeholder="Müşteri kodu" inputmode="numeric" maxlength="4" aria-label="Müşteri kodu" style="min-height:44px;border:2px solid var(--line);border-radius:12px;padding:0 12px;width:100%"><button class="btn small" data-ok="${o.id}" type="button">Onayla</button></div>`}</div>`).join('') || '<p class="muted">Henüz sipariş yok.</p>'}`;
+    <h3 class="sub">Teslim bekleyen siparişler</h3>
+    ${live.map(o => `<div class="order"><b>${o.qty}× ${esc(o.bags.title)}</b>
+      <div class="row2"><input data-code="${o.id}" placeholder="Müşteri kodu" inputmode="numeric" maxlength="4" aria-label="Müşteri kodu" style="min-height:44px;border:2px solid var(--line);border-radius:12px;padding:0 12px;width:100%"><button class="btn small" data-ok="${o.id}" type="button">Onayla</button></div></div>`).join('') || '<p class="muted">Bekleyen sipariş yok.</p>'}
+    ${past.length ? `<h3 class="sub">Geçmiş siparişler</h3>${past.slice(0, 15).map(o => `<div class="order"><b>${o.qty}× ${esc(o.bags.title)}</b><span class="badge ${o.status === 'teslim' ? '' : 'off'}">${{ teslim: 'Teslim edildi', iptal: 'İptal edildi', gelmedi: 'Gelmedi' }[o.status]}</span></div>`).join('')}` : ''}`;
   $('#bagForm').onsubmit = async e => {
     e.preventDefault();
-    const f = Object.fromEntries(new FormData(e.target));
-    if (+f.price >= +f.orig) return toast('İndirimli fiyat normalden düşük olmalı');
-    let photo_url = null;
-    if (f.photo && f.photo.size) {
-      try { photo_url = await uploadPhoto(f.photo, myBiz.id); } catch { return toast('Fotoğraf yüklenemedi'); }
-    }
-    const { error } = await sb.from('bags').insert({ business_id: myBiz.id, title: f.title, description: f.desc, original_price: +f.orig, price: +f.price, qty_available: +f.qty, pickup_from: f.from, pickup_to: f.to, photo_url });
-    if (error) return toast(error.message);
-    toast('Paket yayınlandı'); renderBiz(); loadBags();
+    const f = Object.fromEntries(new FormData(e.target)), btn = e.submitter; btn.disabled = true;
+    try {
+      if (+f.price >= +f.orig) return toast('İndirimli fiyat normalden düşük olmalı');
+      if (f.to <= f.from) return toast('Bitiş saati başlangıçtan sonra olmalı');
+      let photo_url = null;
+      if (f.photo && f.photo.size) {
+        try { photo_url = await uploadPhoto(f.photo, myBiz.id); } catch { return toast('Fotoğraf yüklenemedi'); }
+      }
+      if (f.repeat !== 'none') {
+        const { error } = await sb.from('bag_templates').insert({ business_id: myBiz.id, title: f.title, description: f.desc, original_price: +f.orig, price: +f.price, qty: +f.qty, pickup_from: f.from, pickup_to: f.to, weekdays: DAYS[f.repeat], photo_url });
+        if (error) return toast(error.message);
+        await sb.rpc('publish_my_templates');
+        toast('Tekrarlayan paket kaydedildi');
+      } else {
+        const { error } = await sb.from('bags').insert({ business_id: myBiz.id, title: f.title, description: f.desc, original_price: +f.orig, price: +f.price, qty_available: +f.qty, pickup_from: f.from, pickup_to: f.to, photo_url });
+        if (error) return toast(error.message);
+        toast('Paket yayınlandı');
+      }
+      renderBiz(); loadBags();
+    } finally { btn.disabled = false; }
   };
 }
 
@@ -548,11 +642,22 @@ document.addEventListener('click', async e => {
   if (fav) { e.stopPropagation(); return toggleFav(fav.dataset.fav); }
   const c = t.closest('.card[data-id]');
   if (c) return openBag(c.dataset.id);
+  const cx = t.closest('[data-cancel]'); if (cx) return cancelOrder(cx.dataset.cancel);
+  const rt = t.closest('[data-rate]'); if (rt) return rateSheet(rt.dataset.rate);
   const od = t.closest('.order[data-oid]');
   if (od) { const o = myOrders.find(x => x.id === od.dataset.oid); if (o) showCode(o, o.bags); }
 });
 $('#tab-profil').addEventListener('click', async e => {
   const del = e.target.dataset.del, ok = e.target.dataset.ok;
+  if (e.target.dataset.tact) {
+    const { error } = await sb.from('bag_templates').update({ active: e.target.dataset.on !== 'true' }).eq('id', e.target.dataset.tact);
+    if (!error) renderBiz(); else toast(error.message);
+  }
+  if (e.target.dataset.tdel) {
+    if (!confirm('Tekrarlayan paketi silmek istiyor musun? Bugünkü paket etkilenmez.')) return;
+    const { error } = await sb.from('bag_templates').delete().eq('id', e.target.dataset.tdel);
+    if (!error) renderBiz(); else toast(error.message);
+  }
   if (del) {
     if (!confirm('Bu paketi kaldırmak istiyor musun?')) return;
     const { error } = await sb.from('bags').delete().eq('id', del);

@@ -278,3 +278,21 @@ button,a,.card,summary{touch-action:manipulation}
 .order[data-oid]:active{transform:scale(.99)}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.001s!important;transition-duration:.001s!important}.card.sk{animation:none}}
 .pill-s{white-space:nowrap}
+
+/* Yorum, puan, istatistik, etki kartı */
+.star{color:var(--pink-d);font-weight:700;letter-spacing:.02em}
+.rail .card .star,.grid .card .star{color:var(--pink)}
+.rev{padding:8px 0;border-top:1px solid var(--line)}.rev p{margin-top:2px;font-size:14px}
+.badge.off{background:#f1e4d6;color:#7a4a1c}
+.stars-in{display:flex;justify-content:center;gap:6px}
+.stars-in button{border:0;background:none;font-size:40px;line-height:1;color:#d8cfae;min-width:48px;min-height:48px}
+.stars-in button.on{color:var(--pink)}
+.rtext{width:100%;min-height:84px;border:2px solid var(--line);border-radius:14px;padding:12px;font:500 15px 'DM Sans',sans-serif;resize:vertical;color:var(--ink)}
+.rtext:focus{outline:none;border-color:var(--ink)}
+.stats,.impact{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.stats>div,.impact>div{background:var(--pink-xl);border-radius:16px;padding:12px 8px;text-align:center;display:grid;gap:2px}
+.stats b,.impact b{font-size:19px;letter-spacing:-.01em}
+.stats small,.impact small{font-size:11px;color:var(--mut);line-height:1.2}
+.impact{background:var(--pink);border-radius:20px;padding:10px}
+.impact>div{background:#ffffff80}
+.impact p{grid-column:1/-1;font-size:11px;color:var(--ink);opacity:.7;text-align:center}

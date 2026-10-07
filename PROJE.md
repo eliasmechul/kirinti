@@ -76,3 +76,7 @@ Too Good To Go'nun sitesi ve uygulaması incelendi; **düzen ve akış** oradan,
 - Paketler arka plandan dönünce ve 2 dakikada bir yenilenir.
 - PWA: `manifest.webmanifest`, `sw.js`, `icons/`.
 
+## Platform v2 (2026-10-07)
+Veritabanı canlıya uygulandı (bkz. `supabase/README.md`). Uygulamada: sipariş iptali (teslim penceresinden önce), gelmeyen siparişin otomatik kapanması, teslim sonrası puan + yorum (kartlarda ★ ortalama, detayda son yorumlar), favorilerin hesapla eşitlenmesi, işletme için tekrarlayan paketler (her gün / hafta içi / hafta sonu), işletme istatistikleri, müşteri "etki" kartı (kurtarılan öğün, tasarruf, CO₂).
+**Hâlâ eksik (karar/hesap gerektirir):** gerçek ödeme ve iade (iyzico/PayTR), push/e-posta bildirimleri, işletme onay (admin) akışı, App Store / Google Play paketi (Capacitor + geliştirici hesapları), yayın (hosting + alan adı).
+
