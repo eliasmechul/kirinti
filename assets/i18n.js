@@ -16,7 +16,7 @@
 
   // Tek başına geçerli kısa etiketler: yalnızca metin tam eşleşirse çevrilir (mekân adları bozulmasın)
   var EXACT = {
-    'Bağış': 'Donation', 'Paket': 'Bag', 'Başlangıç': 'Start', 'Ayrıntılar': 'Details', 'Şifre': 'Password',
+    'Bağış': 'Donation', '%8–10': '8–10%', 'Paket': 'Bag', 'Başlangıç': 'Start', 'Ayrıntılar': 'Details', 'Şifre': 'Password',
     'İş': 'Work', 'Ev': 'Home', 'Ara': 'Search', 'SSS': 'FAQ', 'Kafe': 'Café',  'Bitiş': 'End', 'Bugün': 'Today',
     'Diğer': 'Other', 'Ekmek': 'Bread', 'Fırın': 'Bakery', 'Gözat': 'Browse', 'Hepsi': 'All', 'Kapat': 'Close', 'Konum': 'Location',
     'Liste': 'List', 'Manav': 'Greengrocer', 'Tamam': 'Done', 'Yasal': 'Legal', 'Yemek': 'Meals', 'kaldı': 'left',
@@ -253,7 +253,15 @@
       else attrs(n);
     }
   }
+  function swapShots() {
+    var im = document.querySelectorAll('img[src*="assets/screens/"]');
+    for (var k = 0; k < im.length; k++) {
+      var v = im[k].getAttribute('src');
+      if (!/-en\.webp/.test(v)) im[k].setAttribute('src', v.replace(/\.webp/, '-en.webp'));
+    }
+  }
   function start() {
+    swapShots();
     document.title = tr(document.title);
     walk(document.documentElement);
     new MutationObserver(function (ms) {
