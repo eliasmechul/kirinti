@@ -155,10 +155,8 @@ const isVeg = p => ['manav', 'market'].includes(p.businesses.type) && !EKMEK.tes
 const isBread = p => p.businesses.type === 'firin' || EKMEK.test(p.title);
 const KAHVALTI = /brunch|kahvaltı/i;
 function visible() {
-  const q = query.trim().toLocaleLowerCase('tr');
   return bags.filter(p => {
     const b = p.businesses;
-    if (q && !(b.name + ' ' + p.title).toLocaleLowerCase('tr').includes(q)) return false;
     if (cat === 'restoran' || cat === 'kafe') return b.type === cat;
     if (cat === 'pastane') return PASTANE.test(p.title);
     if (cat === 'sebze') return isVeg(p);
@@ -206,28 +204,125 @@ function render() {
     + rail('kafe', 'Kafeler', open.filter(p => p.businesses.type === 'kafe'))
     + rail('out', 'Tükenenler', list.filter(p => p.qty_available === 0))
     || '<p class="empty">Aramana uygun paket bulunamadı.</p>';
-  mapDirty = true; if ($('#tab-gozat').classList.contains('active')) renderMap(list);
+  mapDirty = true; if ($('#tab-gozat').classList.contains('active')) renderBrowse();
   renderFavs();
 }
 
-function renderMap(list = visible()) {
+// ---------- Gözat: arama, filtre, harita (mekân işaretleri) ve liste ----------
+let bq = '', view = 'map', selBiz = null, fitNext = true;
+const F0 = { time: 'all', cats: [], maxPrice: 0, dist: 0, hideSold: true, sort: 'dist' };
+let F = { ...F0 };
+try { Object.assign(F, JSON.parse(localStorage.getItem('kirinti_filters') || '{}')); } catch {}
+const saveF = () => { try { localStorage.setItem('kirinti_filters', JSON.stringify(F)); } catch {} };
+const WIN = { morn: ['06:00', '12:00'], noon: ['12:00', '17:00'], eve: ['17:00', '21:00'], night: ['21:00', '23:59'] };
+const CATS = {
+  yemek: p => p.businesses.type === 'restoran' && !PASTANE.test(p.title) && !isBread(p) && !isVeg(p) && !KAHVALTI.test(p.title),
+  pastane: p => PASTANE.test(p.title), ekmek: isBread, sebze: isVeg, hazir: p => HAZIR.test(p.title),
+  kafe: p => p.businesses.type === 'kafe', kahvalti: p => KAHVALTI.test(p.title),
+};
+const CAT_NAME = { yemek: 'Yemek', pastane: 'Pastane', ekmek: 'Ekmek & fırın', sebze: 'Sebze & meyve', hazir: 'Hazır yemek', kafe: 'Kafe', kahvalti: 'Kahvaltı' };
+const SORTS = { dist: 'Mesafe', price: 'Fiyat', rating: 'Puan', ending: 'Bitiş saati' };
+const activeFilters = () => (F.time !== 'all') + F.cats.length + !!F.maxPrice + !!F.dist + !F.hideSold + (F.sort !== 'dist');
+function browseResults() {
+  const q = bq.trim().toLocaleLowerCase('tr');
+  const list = bags.filter(p => {
+    const b = p.businesses;
+    if (q && !(b.name + ' ' + p.title + ' ' + typeLabel(b)).toLocaleLowerCase('tr').includes(q)) return false;
+    if (F.hideSold && (!p.qty_available || ended(p))) return false;
+    if (F.maxPrice && p.price > F.maxPrice) return false;
+    if (F.dist && dist(p) > F.dist) return false;
+    if (F.time === 'now' && !isOpen(p)) return false;
+    const w = WIN[F.time]; if (w && !(hm(p.pickup_from) < w[1] && hm(p.pickup_to) > w[0])) return false;
+    if (F.cats.length && !F.cats.some(k => CATS[k](p))) return false;
+    return true;
+  });
+  const by = { dist: (a, b) => dist(a) - dist(b), price: (a, b) => a.price - b.price,
+    rating: (a, b) => (ratings[b.businesses.id]?.avg_rating || 0) - (ratings[a.businesses.id]?.avg_rating || 0),
+    ending: (a, b) => hm(a.pickup_to).localeCompare(hm(b.pickup_to)) };
+  return list.sort(by[F.sort] || by.dist);
+}
+function groupBiz(list) {
+  const m = new Map();
+  list.forEach(p => { const b = p.businesses; if (!m.has(b.id)) m.set(b.id, { b, bags: [] }); m.get(b.id).bags.push(p); });
+  return [...m.values()];
+}
+function renderBrowse() {
+  const list = browseResults(), groups = groupBiz(list), n = activeFilters();
+  $('#fCount').hidden = !n; $('#fCount').textContent = n;
+  if (view === 'list') {
+    $('#browseList').innerHTML = list.length
+      ? `<p class="muted count">${groups.length} mekân · ${list.length} paket</p><div class="grid">${list.map(card).join('')}</div>`
+      : `<div class="empty"><p>Bu aramaya uygun paket yok.</p>${n || bq ? '<button class="btn small sec" data-fclear type="button" style="margin-top:12px">Filtreleri ve aramayı temizle</button>' : ''}</div>`;
+    return;
+  }
   if (!map) return;
   mapDirty = false; layer.clearLayers();
-  list.forEach(p => {
-    const b = p.businesses, out = !p.qty_available;
-    const icon = L.divIcon({ className: '', iconSize: [0, 0],
-      html: `<div class="pricepin ${p.id === selId ? 'sel' : ''} ${out ? 'out' : ''}">${money(p.price)} ₺ <small>· ${p.qty_available}</small></div>` });
-    L.marker([b.lat, b.lng], { icon }).addTo(layer).on('click', () => { selId = p.id; renderMap(list); });
+  if (selBiz && !groups.some(g => g.b.id === selBiz)) selBiz = null;
+  groups.forEach(g => {
+    const left = g.bags.reduce((a, p) => a + p.qty_available, 0), sel = g.b.id === selBiz;
+    const icon = L.divIcon({ className: '', iconSize: [0, 0], html:
+      `<div class="pin ${sel ? 'sel' : ''} ${left ? '' : 'out'}" aria-label="${esc(g.b.name)}"><span>${initial(g.b)}</span><b>${left}</b>${sel ? `<em>${esc(g.b.name)}</em>` : ''}</div>` });
+    L.marker([g.b.lat, g.b.lng], { icon, zIndexOffset: sel ? 1000 : 0 }).addTo(layer).on('click', () => { selBiz = g.b.id; renderBrowse(); });
   });
-  renderPick();
+  if (fitNext && groups.length) {
+    fitNext = false;
+    map.fitBounds(L.latLngBounds(groups.map(g => [g.b.lat, g.b.lng]).concat([me])), { padding: [70, 70], maxZoom: 15 });
+  }
+  renderPick(groups);
 }
-function renderPick() {
-  const p = bags.find(x => x.id === selId);
-  $('#pick').innerHTML = p ? `<article class="card" data-id="${p.id}"><div class="ph"><img class="cover" src="${photo(p)}" alt="" loading="lazy"></div>
-    <div class="body" style="padding:12px 14px"><span class="badge">${p.qty_available ? p.qty_available + ' kaldı' : 'Tükendi'}</span>
-    <div class="nm" style="margin-top:6px">${esc(p.businesses.name)}</div><div class="ty">${esc(p.title)} · ${fmtDist(dist(p))}</div>
-    <div class="when">${timeLabel(p)}</div>
-    <div class="pr" style="margin-top:2px"><s>${money(p.original_price)} ₺</s><b>${money(p.price)} ₺</b></div></div></article>` : '';
+function renderPick(groups) {
+  const g = groups.find(x => x.b.id === selBiz);
+  $('#pick').innerHTML = g ? `<div class="pick-card"><div class="pk-head"><i>${initial(g.b)}</i>
+      <div><b>${esc(g.b.name)}</b><small>${typeLabel(g.b)} · ${fmtDist(dist(g.bags[0]))}${stars(g.b.id) ? ` · <span class="star">${stars(g.b.id)}</span>` : ''}</small></div>
+      <button class="circ" id="pkClose" type="button" aria-label="Kapat">${ICON.close}</button></div>
+    ${g.bags.map(p => `<button class="pick-row" data-id="${p.id}" type="button"><img src="${photo(p)}" alt="" loading="lazy">
+      <span><b>${esc(p.title)}</b><small>${timeLabel(p)} · ${p.qty_available ? p.qty_available + ' kaldı' : 'Tükendi'}</small></span><em>${money(p.price)} ₺</em></button>`).join('')}</div>` : '';
+  const x = $('#pkClose'); if (x) x.onclick = () => { selBiz = null; renderBrowse(); };
+}
+function setView(v) {
+  view = v;
+  $('#tab-gozat').classList.toggle('list', v === 'list');
+  document.querySelectorAll('#seg button').forEach(b => { const on = b.dataset.v === v; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+  $('#mapWrap').hidden = v === 'list'; $('#browseList').hidden = v !== 'list';
+  if (v === 'map') { fitNext = true; ensureMap().then(() => { map.invalidateSize(); renderBrowse(); }).catch(() => toast('Harita yüklenemedi')); }
+  else renderBrowse();
+}
+function openSearch() { setTab('gozat'); setView('list'); setTimeout(() => $('#q').focus(), 80); }
+
+// Filtre paneli: seçimler anında uygulanır, düğmede sonuç sayısı görünür
+function filterSheet() {
+  const chip = (k, v, label, on) => `<button type="button" class="fchip ${on ? 'on' : ''}" data-fk="${k}" data-fv="${v}" aria-pressed="${on}">${label}</button>`;
+  const grp = (t, inner) => `<div class="fgrp"><h4>${t}</h4><div class="fchips">${inner}</div></div>`;
+  sheet(`<h3>Filtreler</h3>
+    ${grp('Sırala', Object.entries(SORTS).map(([k, l]) => chip('sort', k, l, F.sort === k)).join(''))}
+    ${grp('Teslim saati', [['all', 'Hepsi'], ['now', 'Şimdi'], ['morn', 'Sabah'], ['noon', 'Öğle'], ['eve', 'Akşam'], ['night', 'Gece']].map(([k, l]) => chip('time', k, l, F.time === k)).join(''))}
+    ${grp('Ne kurtarmak istersin?', Object.entries(CAT_NAME).map(([k, l]) => chip('cat', k, l, F.cats.includes(k))).join(''))}
+    ${grp('Mesafe', [[0, 'Hepsi'], [1, '1 km'], [3, '3 km'], [5, '5 km'], [10, '10 km']].map(([k, l]) => chip('dist', k, l, F.dist === k)).join(''))}
+    ${grp('En yüksek fiyat', [[0, 'Hepsi'], [50, '50 ₺'], [100, '100 ₺'], [150, '150 ₺']].map(([k, l]) => chip('price', k, l, F.maxPrice === k)).join(''))}
+    <label class="fswitch"><input type="checkbox" id="fsold" ${F.hideSold ? 'checked' : ''}><span>Tükenenleri gizle</span></label>
+    <div class="row2" style="margin-top:6px"><button class="btn sec" id="fclear" type="button">Temizle</button><button class="btn" id="fshow" type="button"></button></div>`);
+  const sync = () => {
+    document.querySelectorAll('.fchip').forEach(c => {
+      const k = c.dataset.fk, v = c.dataset.fv;
+      const on = k === 'cat' ? F.cats.includes(v) : k === 'sort' ? F.sort === v : k === 'time' ? F.time === v : k === 'dist' ? F.dist === +v : F.maxPrice === +v;
+      c.classList.toggle('on', on); c.setAttribute('aria-pressed', on);
+    });
+    const n = browseResults().length;
+    $('#fshow').textContent = n ? `${n} paketi göster` : 'Sonuç yok';
+    saveF(); renderBrowse();
+  };
+  $('#sheetBody').onclick = e => {
+    const c = e.target.closest('.fchip'); if (!c) return;
+    const k = c.dataset.fk, v = c.dataset.fv;
+    if (k === 'cat') F.cats = F.cats.includes(v) ? F.cats.filter(x => x !== v) : [...F.cats, v];
+    else if (k === 'sort') F.sort = v; else if (k === 'time') F.time = v;
+    else if (k === 'dist') F.dist = +v; else F.maxPrice = +v;
+    sync();
+  };
+  $('#fsold').onchange = e => { F.hideSold = e.target.checked; sync(); };
+  $('#fclear').onclick = () => { F = { ...F0 }; $('#fsold').checked = true; sync(); };
+  $('#fshow').onclick = closeSheet;
+  sync();
 }
 function renderFavs() {
   const el = $('#favs'); if (!el) return;
@@ -623,21 +718,16 @@ function setTab(name) {
   document.querySelectorAll('.tabbar button').forEach(x => x.classList.toggle('on', x.dataset.t === name));
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-' + name));
   closePage(); closeSheet();
-  if (name === 'gozat') {
-    ensureMap().then(() => { map.invalidateSize(); map.setView(me, 14); if (mapDirty) renderMap(); })
-      .catch(() => toast('Harita yüklenemedi'));
-  }
+  if (name === 'gozat') setView(view);
 }
 document.querySelectorAll('.tabbar button').forEach(btn => btn.onclick = () => setTab(btn.dataset.t));
-$('#toList').onclick = () => setTab('kesfet');
 $('#locBtn').onclick = locSheet;
 // İki arama kutusu (Keşfet ve Gözat) birbirine bağlı; yazarken liste her tuşta değil, kısa bir beklemeden sonra yenilenir
 let qTimer;
-const onSearch = e => {
-  query = e.target.value; $('#q').value = $('#q0').value = query;
-  clearTimeout(qTimer); qTimer = setTimeout(render, 160);
-};
-$('#q').oninput = $('#q0').oninput = onSearch;
+$('#q').oninput = e => { bq = e.target.value; clearTimeout(qTimer); qTimer = setTimeout(renderBrowse, 160); };
+$('#q0').onfocus = $('#q0').onclick = openSearch;   // Keşfet'teki arama kutusu Gözat'ı açar
+$('#fBtn').onclick = filterSheet;
+document.querySelectorAll('#seg button').forEach(b => b.onclick = () => setView(b.dataset.v));
 $('#cats').onclick = e => {
   const b = e.target.closest('button[data-c]'); if (!b) return; cat = b.dataset.c;
   document.querySelectorAll('#cats button').forEach(x => x.classList.toggle('on', x === b)); render();
@@ -661,8 +751,9 @@ document.addEventListener('click', async e => {
   if (all) return showList(all.dataset.all);
   const fav = t.closest('[data-fav]');
   if (fav) { e.stopPropagation(); return toggleFav(fav.dataset.fav); }
-  const c = t.closest('.card[data-id]');
+  const c = t.closest('.card[data-id], .pick-row[data-id]');
   if (c) return openBag(c.dataset.id);
+  if (t.closest('[data-fclear]')) { F = { ...F0 }; bq = ''; $('#q').value = ''; saveF(); return renderBrowse(); }
   const cx = t.closest('[data-cancel]'); if (cx) return cancelOrder(cx.dataset.cancel);
   const rt = t.closest('[data-rate]'); if (rt) return rateSheet(rt.dataset.rate);
   const od = t.closest('.order[data-oid]');

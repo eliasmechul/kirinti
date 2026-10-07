@@ -83,3 +83,6 @@ Veritabanı canlıya uygulandı (bkz. `supabase/README.md`). Uygulamada: sipari�
 ## Daha fazla paket türü (2026-10-07)
 İşletme türleri genişledi: `restoran`, `kafe`, `firin`, `manav`, `market` (migration `20261007_business_types.sql`, canlıya uygulandı). Uygulamada yeni kategoriler: Ekmek, Sebze & meyve, Hazır yemek; paket fotoğrafı yoksa türüne/adına göre varsayılan görsel seçilir. Sebze, meyve, ekmek ve hazır yemek görselleri şimdilik çizim (`assets/visuals/`); gerçek fotoğraflarla değiştirilmeli.
 
+## Gözat: arama, filtre ve harita (2026-10-07)
+Too Good To Go'nun Gözat sekmesi örnek alındı: arama kutusu + filtre düğmesi (aktif filtre sayısı rozeti) + Harita/Liste anahtarı. Harita artık fiyat değil **mekân işaretleri** gösterir (baş harf + kalan paket sayısı); işarete dokununca altta mekânın paketleri listelenir. Keşfet'teki arama kutusu Gözat'ın liste görünümünü açar. Filtre paneli: sıralama (mesafe, fiyat, puan, bitiş saati), teslim saati (şimdi, sabah, öğle, akşam, gece), kategori (çoklu seçim), mesafe, en yüksek fiyat, tükenenleri gizle; sonuç sayısı canlı güncellenir, seçimler cihazda saklanır.
+

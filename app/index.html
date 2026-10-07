@@ -32,7 +32,7 @@
           <h1 class="hero-h"><span>Yakınındaki</span>Sürpriz Paketler</h1>
           <label class="search"><span class="sr">Ara</span>
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-            <input id="q0" type="search" placeholder="Restoran, kafe veya yemek ara" enterkeyhint="search">
+            <input id="q0" type="search" placeholder="Mekân, yemek veya tür ara" readonly aria-label="Ara: Gözat sekmesini açar">
           </label>
         </div>
         <div class="cats" id="cats" role="group" aria-label="Kategoriler">
@@ -50,17 +50,23 @@
       </div>
     </section>
 
-    <!-- GÖZAT (HARİTA) -->
+    <!-- GÖZAT: arama, filtre, harita / liste -->
     <section id="tab-gozat" class="tab">
-      <div id="map"></div>
-      <div class="map-top">
-        <label class="map-search"><span class="sr">Ara</span>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-          <input id="q" type="search" placeholder="Restoran, kafe veya yemek ara" enterkeyhint="search">
-        </label>
-        <button type="button" class="map-list" id="toList">Liste</button>
+      <div id="mapWrap"><div id="map"></div><div id="pick"></div></div>
+      <div id="browseList" class="scroll" hidden></div>
+      <div class="b-top">
+        <div class="b-row">
+          <label class="map-search"><span class="sr">Ara</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+            <input id="q" type="search" placeholder="Mekân, yemek veya tür ara" enterkeyhint="search">
+          </label>
+          <button type="button" class="fbtn" id="fBtn" aria-label="Filtreler"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg><i id="fCount" hidden>0</i></button>
+        </div>
+        <div class="seg" id="seg" role="group" aria-label="Görünüm">
+          <button type="button" data-v="map" class="on" aria-pressed="true">Harita</button>
+          <button type="button" data-v="list" aria-pressed="false">Liste</button>
+        </div>
       </div>
-      <div id="pick"></div>
     </section>
 
     <!-- FAVORİLER -->
