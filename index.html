@@ -6,6 +6,9 @@
 <title>Kırıntı – İyi yemek çöpe gitmesin</title>
 <meta name="description" content="Restoran, fırın, kafe ve manavlarda kapanıştan önce artan taptaze yemekleri çok uygun fiyata kurtar. Haritada bul, sürpriz paketini ayır, kodunla teslim al.">
 <meta name="theme-color" content="#FFD45E">
+<link rel="canonical" href="https://kirinti-app.com/">
+<meta property="og:url" content="https://kirinti-app.com/">
+<meta property="og:site_name" content="Kırıntı">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Kırıntı – İyi yemek çöpe gitmesin">
 <meta property="og:description" content="Mahalledeki restoran, fırın, kafe ve manavların artan yemeklerini sürpriz paket olarak uygun fiyata kurtar.">
@@ -17,7 +20,7 @@
 <link rel="stylesheet" href="styles.css">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@graph":[
- {"@type":"Organization","name":"Kırıntı","description":"Restoran, fırın, kafe ve manavların kapanıştan önce artan yemeklerini sürpriz paket olarak uygun fiyata sunan platform."},
+ {"@type":"Organization","name":"Kırıntı","url":"https://kirinti-app.com","description":"Restoran, fırın, kafe ve manavların kapanıştan önce artan yemeklerini sürpriz paket olarak uygun fiyata sunan platform."},
  {"@type":"FAQPage","mainEntity":[
   {"@type":"Question","name":"Sürpriz paket nedir?","acceptedAnswer":{"@type":"Answer","text":"Kapanıştan önce satılamayan ama hâlâ taptaze ürünlerin, içeriği sürpriz olarak, normal fiyatın çok altında satıldığı pakettir."}},
   {"@type":"Question","name":"Rezervasyonumu iptal edebilir miyim?","acceptedAnswer":{"@type":"Answer","text":"Evet, teslim saati başlamadan önce Siparişler sekmesinden iptal edebilirsin; stok geri açılır."}}
@@ -37,6 +40,7 @@
       <a href="#isletme">İşletmeler</a>
       <a href="#sss">SSS</a>
     </nav>
+    <button class="lang-btn" id="langBtn" type="button" data-notranslate aria-label="Language">EN</button>
     <a href="app/index.html" class="btn btn-dark nav-cta">Uygulamayı dene</a>
   </div>
 </header>
@@ -129,16 +133,7 @@
 <!-- ============ NEDEN KIRINTI ============ -->
 <section class="sec" id="neden">
   <div class="wrap why">
-    <div class="why-art" aria-hidden="true">
-      <svg viewBox="0 0 360 440">
-        <path d="M70 120L290 120L320 420L40 420Z" fill="#FFD45E"/>
-        <path d="M70 120L290 120L296 150L64 150Z" fill="#F5BE3A"/>
-        <path d="M130 120C130 50 230 50 230 120" fill="none" stroke="#F5BE3A" stroke-width="10" stroke-linecap="round"/>
-        <rect x="190" y="12" width="46" height="170" rx="23" transform="rotate(14 190 12)" fill="#E6B567"/>
-        <rect x="116" y="40" width="40" height="150" rx="20" transform="rotate(-10 116 40)" fill="#E6B567"/>
-        <g transform="translate(116 206) scale(1.9)"><defs><mask id="bm"><rect width="64" height="64" fill="#fff"/><path d="M16 31L22 41M28 27L35 40M41 30L47 40" stroke="#000" stroke-width="4.6" stroke-linecap="round" fill="none"/></mask></defs><path d="M3 37C3 25 15 16 32 16C49 16 61 25 61 37C61 46 56 51 47 51H17C8 51 3 46 3 37Z" fill="#2A2410" mask="url(#bm)"/><circle cx="19" cy="57" r="1.9" fill="#2A2410"/><circle cx="31" cy="58.8" r="1.4" fill="#2A2410"/><circle cx="42" cy="57" r="1.9" fill="#2A2410"/><circle cx="52" cy="56.6" r="1.2" fill="#2A2410"/></g>
-      </svg>
-    </div>
+    <div class="why-art"><img src="assets/visuals/friends.svg" alt="Çizim: iki arkadaş, Kırıntı çantasından kurtardıkları yemeği paylaşıyor" width="600" height="480" loading="lazy"></div>
     <div class="why-body">
       <p class="eyebrow">Neden Kırıntı?</p>
       <h2>Cebine, mahalleline ve gezegene iyi gelir</h2>
@@ -164,6 +159,7 @@
         <li>Tekrarlayan paketleri bir kez kur, her gün otomatik yayınlansın.</li>
         <li>Teslimi müşterinin 4 haneli koduyla saniyeler içinde onayla.</li>
         <li>Satışlarını, kazancını ve müşteri puanlarını panelden takip et.</li>
+        <li>Kazancının bir kısmını Filistin'deki insanlara bağışlayabilirsin.</li>
       </ul>
     </div>
     <form class="form" data-form="business" novalidate>
@@ -188,10 +184,11 @@
     </header>
     <div class="faq">
       <details><summary>Sürpriz paket nedir?</summary><p>Kapanıştan önce satılamayan ama hâlâ taptaze ürünlerin, içeriği sürpriz olarak, normal fiyatın çok altında satıldığı pakettir. İçerik gün sonuna göre değişir; alerjen bilgisi paket sayfasında yer alır.</p></details>
-      <details><summary>Ödemeyi nasıl yaparım, paketi nasıl alırım?</summary><p>Uygulamada paketi rezerve eder, mekânın belirttiği saat aralığında 4 haneli kodunu göstererek teslim alırsın. Ödeme adımı şu anda test aşamasındadır; gerçek kart tahsilatı açıldığında duyuracağız.</p></details>
+      <details><summary>Ödemeyi nasıl yaparım, paketi nasıl alırım?</summary><p>Uygulamada paketi rezerve eder, mekânın belirttiği saat aralığında 4 haneli kodunu göstererek teslim alırsın. Kartla ya da PayPal ile ödeyebilirsin; Apple Pay ve Google Pay yakında. Ödeme adımı şu anda test aşamasındadır; gerçek tahsilat açıldığında duyuracağız.</p></details>
       <details><summary>Rezervasyonumu iptal edebilir miyim?</summary><p>Evet. Teslim saati başlamadan önce Siparişler sekmesinden iptal edebilirsin; paket stoğa geri döner. Ödeme aktif olduğunda tutar sana iade edilecek.</p></details>
       <details><summary>Paketimi zamanında alamazsam ne olur?</summary><p>Teslim saati geçen siparişler “teslim alınmadı” olarak kapanır. Bu yüzden saat aralığını rezervasyondan önce kontrol etmeni öneririz.</p></details>
       <details><summary>İşletmem nasıl katılır?</summary><p>Yukarıdaki formu doldur, seninle iletişime geçelim. Katıldıktan sonra paket sayısını, fiyatı ve saati kendin belirler, teslimleri kodla onaylarsın.</p></details>
+      <details><summary>Bağış nasıl çalışıyor?</summary><p>Ödeme sırasında isteğe bağlı bağış ekleyebilirsin; işletmeler de kazançlarının bir kısmını bağışlayabilir. Bağışlar Filistin'deki insanlara yardım ulaştıran yetkili bir kuruluş üzerinden aktarılacaktır. Şu an test modundayız, gerçek bağış toplanmıyor.</p></details>
       <details><summary>Hangi şehirlerdesiniz?</summary><p>Henüz yayında değiliz. İlk şehrimiz açılırken haber almak için aşağıdaki listeye katılabilirsin.</p></details>
     </div>
   </div>
@@ -238,9 +235,10 @@
       <span>Çerez politikası <em>(yakında)</em></span>
     </nav>
   </div>
-  <div class="wrap foot-bottom"><span>© 2026 Kırıntı</span><span>Gıda israfına karşı, mahalleden başlayarak.</span></div>
+  <div class="wrap foot-bottom"><span>© 2026 Kırıntı · kirinti-app.com</span><span>Gıda israfına karşı, mahalleden başlayarak.</span></div>
 </footer>
 
+<script src="assets/i18n.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="script.js"></script>
 </body>

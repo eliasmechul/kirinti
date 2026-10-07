@@ -100,3 +100,13 @@ Too Good To Go'nun Gözat sekmesi örnek alındı: arama kutusu + filtre düğme
 ## Profesyonel yenileme (2026-10-07)
 Too Good To Go'nun (Almanya) sitesi ve uygulaması örnek alındı (site engelli olduğu için bilinen yapıya göre). Tanıtım sayfası baştan: sabit menü, gerçek uygulama ekranlı açılış (`assets/screens/`), FAO/UNEP gerçeklerini veren bant, 3 adım, kategoriler, "neden", işletme bölümü + form, SSS, bekleme listesi, sütunlu alt bilgi. Bekleme listesindeki gizli e-posta kutusu hatası düzeltildi. Uygulama: ilk açılışta 3 adımlı tanıtım, profil menüsü, yardım/SSS sayfası, kartlarda "Son N dk" etiketi.
 
+## Alan adı: kirinti-app.com
+Kontrol edildiğinde müsaitti (ilk yıl ~16 USD); satın alınmadı. Yapılacaklar: 1) herhangi bir alan adı sağlayıcısından kayıt et, 2) Netlify > Domain management > Add custom domain: `kirinti-app.com` (DNS kayıtlarını Netlify söyler; HTTPS otomatik), 3) Supabase > Authentication > URL Configuration > Site URL: `https://kirinti-app.com`, 4) `www.kirinti-app.com` yönlendirmesi. Sitede `canonical` ve `og:url` bu adrese ayarlı.
+
+
+## Ödeme, bağış, dil, açılış (Ekim 2026)
+- Ödeme seçenekleri (kart, PayPal; Apple/Google Pay "yakında") şu an TEST modu; gerçek tahsilat için iyzico/PayPal hesabı gerekir.
+- Bağış: ödemede 0/5/10/20 ₺ (Filistin); işletme profilinde gelirinin %'si bağış taahhüdü. Gerçek bağış için yetkili yardım kuruluşu + yasal izin şart.
+- Dil: `assets/i18n.js` (TR/EN çalışma zamanı çevirisi, `localStorage.kirinti_lang`). Yeni metinler için EXACT/PHR sözlüğüne ekle.
+- Açılış animasyonu (`#splash`), kategori şeridi, `assets/visuals/friends.svg`.
+- Eski 2 argümanlı `reserve_bag` hâlâ veritabanında; DROP tekrar denenmeli.

@@ -40,3 +40,12 @@ document.querySelectorAll('form[data-form]').forEach(form => {
     form.reset(); say(OK[kind]);
   });
 });
+
+// ---- Dil düğmesi ----
+const langBtn = $('#langBtn');
+if (langBtn) {
+  const cur = window.KIRINTI_LANG || 'tr';
+  langBtn.textContent = cur === 'en' ? 'TR' : 'EN';
+  langBtn.setAttribute('aria-label', cur === 'en' ? 'Türkçe' : 'English');
+  langBtn.onclick = () => window.setKirintiLang && window.setKirintiLang(cur === 'en' ? 'tr' : 'en');
+}
