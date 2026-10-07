@@ -3,6 +3,16 @@ const SUPABASE_URL = 'https://dkcwjgonziqizaouypsd.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_U8w5lw--srZQ9auJAeLTIQ_oxR065hS'; // herkese açık anahtar; güvenlik RLS kurallarında
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// Gerçek fotoğraf dosyası yoksa aynı adlı çizime dön (assets/photos/x.jpg yoksa assets/visuals/x.svg)
+function photoFallback(i) {
+  if (i.tagName !== 'IMG' || i.dataset.fb) return;
+  const s = i.getAttribute('src') || '';
+  if (/assets\/photos\/[a-z]+\.jpg$/.test(s)) { i.dataset.fb = '1'; i.src = s.replace(/photos\/([a-z]+)\.jpg$/, 'visuals/$1.svg'); }
+}
+document.addEventListener('error', e => photoFallback(e.target), true);
+const sweepPhotos = () => document.querySelectorAll('img').forEach(i => { if (i.complete && i.naturalWidth === 0) photoFallback(i); });
+document.addEventListener('DOMContentLoaded', sweepPhotos); window.addEventListener('load', sweepPhotos);
+
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const hm = t => String(t).slice(0, 5);
@@ -45,11 +55,11 @@ const saveFavs = () => { try { localStorage.setItem('kirinti_fav', JSON.stringif
 const photo = p => esc(p.photo_url || defaultPic(p));
 function defaultPic(p) {
   const t = p.title, ty = p.businesses.type;
-  if (isVeg(p)) return '../assets/visuals/' + (/meyve/i.test(t) ? 'fruit' : 'vegetables') + '.svg';
-  if (isBread(p)) return '../assets/visuals/bread.svg';
+  if (isVeg(p)) return '../assets/photos/' + (/meyve/i.test(t) ? 'fruit' : 'vegetables') + '.jpg';
+  if (isBread(p)) return '../assets/photos/bread.jpg';
   if (KAHVALTI.test(t)) return '../assets/photos/breakfast.jpg';
   if (PASTANE.test(t)) return '../assets/photos/cake.jpg';
-  if (HAZIR.test(t)) return '../assets/visuals/ready.svg';
+  if (HAZIR.test(t)) return '../assets/photos/ready.jpg';
   return ty === 'kafe' ? '../assets/photos/coffee.jpg' : '../assets/photos/soup.jpg';
 }
 const initial = b => esc(b.name.trim()[0] || '?');
