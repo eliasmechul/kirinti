@@ -16,3 +16,4 @@ Tüm fotoğraflar [Unsplash](https://unsplash.com) üzerinden, [Unsplash Lisans�
 | coffee.jpg | @_dibo_ | https://unsplash.com/photos/XnB2vyAqhzg |
 | baker.jpg | @andylid0 | https://unsplash.com/photos/RndRFJ1v1kk |
 | phone.jpg | Kelly Sikkema (@kellysikkema) | https://unsplash.com/photos/roJv_dmHKVA |
+| bread.jpg | @andylid0 (baker.jpg'den kırpıldı) | https://unsplash.com/photos/RndRFJ1v1kk |
