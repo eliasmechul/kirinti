@@ -80,3 +80,6 @@ Too Good To Go'nun sitesi ve uygulaması incelendi; **düzen ve akış** oradan,
 Veritabanı canlıya uygulandı (bkz. `supabase/README.md`). Uygulamada: sipariş iptali (teslim penceresinden önce), gelmeyen siparişin otomatik kapanması, teslim sonrası puan + yorum (kartlarda ★ ortalama, detayda son yorumlar), favorilerin hesapla eşitlenmesi, işletme için tekrarlayan paketler (her gün / hafta içi / hafta sonu), işletme istatistikleri, müşteri "etki" kartı (kurtarılan öğün, tasarruf, CO₂).
 **Hâlâ eksik (karar/hesap gerektirir):** gerçek ödeme ve iade (iyzico/PayTR), push/e-posta bildirimleri, işletme onay (admin) akışı, App Store / Google Play paketi (Capacitor + geliştirici hesapları), yayın (hosting + alan adı).
 
+## Daha fazla paket türü (2026-10-07)
+İşletme türleri genişledi: `restoran`, `kafe`, `firin`, `manav`, `market` (migration `20261007_business_types.sql`, canlıya uygulandı). Uygulamada yeni kategoriler: Ekmek, Sebze & meyve, Hazır yemek; paket fotoğrafı yoksa türüne/adına göre varsayılan görsel seçilir. Sebze, meyve, ekmek ve hazır yemek görselleri şimdilik çizim (`assets/visuals/`); gerçek fotoğraflarla değiştirilmeli.
+

@@ -41,9 +41,20 @@ try { favs = JSON.parse(localStorage.getItem('kirinti_fav') || '[]'); } catch {}
 const saveFavs = () => { try { localStorage.setItem('kirinti_fav', JSON.stringify(favs)); } catch {} };
 
 // ---------- Görsel yardımcılar ----------
-const photo = p => esc(p.photo_url || (p.businesses.type === 'kafe' ? '../assets/photos/coffee.jpg' : '../assets/photos/soup.jpg'));
+// Paketin kendi fotoğrafı yoksa türüne ve adına uygun varsayılan görsel
+const photo = p => esc(p.photo_url || defaultPic(p));
+function defaultPic(p) {
+  const t = p.title, ty = p.businesses.type;
+  if (isVeg(p)) return '../assets/visuals/' + (/meyve/i.test(t) ? 'fruit' : 'vegetables') + '.svg';
+  if (isBread(p)) return '../assets/visuals/bread.svg';
+  if (KAHVALTI.test(t)) return '../assets/photos/breakfast.jpg';
+  if (PASTANE.test(t)) return '../assets/photos/cake.jpg';
+  if (HAZIR.test(t)) return '../assets/visuals/ready.svg';
+  return ty === 'kafe' ? '../assets/photos/coffee.jpg' : '../assets/photos/soup.jpg';
+}
 const initial = b => esc(b.name.trim()[0] || '?');
-const typeLabel = b => b.type === 'kafe' ? 'Kafe' : 'Restoran';
+const TYPE_NAME = { restoran: 'Restoran', kafe: 'Kafe', firin: 'Fırın', manav: 'Manav', market: 'Market' };
+const typeLabel = b => TYPE_NAME[b.type] || 'Restoran';
 const dist = p => p._d ??= km(me, [p.businesses.lat, p.businesses.lng]);
 const fmtDist = d => d < 1 ? `${Math.max(50, Math.round(d * 10) * 100)} m` : `${d.toFixed(1)} km`;
 const pct = p => Math.round((1 - p.price / p.original_price) * 100);
@@ -136,7 +147,12 @@ async function loadMyBiz() {
 
 const isOpen = p => nowTR() >= hm(p.pickup_from) && nowTR() <= hm(p.pickup_to);
 const ended = p => nowTR() > hm(p.pickup_to);
-const PASTANE = /pasta|kurabiye|börek|tatlı|baklava|simit|poğaça/i;
+const PASTANE = /pasta|kurabiye|börek|tatlı|baklava|poğaça/i;
+const SEBZE = /sebze|meyve|manav|domates|elma|portakal|salata/i;
+const EKMEK = /ekmek|francala|somun|baget|simit|fırın/i;
+const HAZIR = /hazır|menü|ana yemek|çorba|yemek paketi/i;
+const isVeg = p => ['manav', 'market'].includes(p.businesses.type) && !EKMEK.test(p.title) || SEBZE.test(p.title);
+const isBread = p => p.businesses.type === 'firin' || EKMEK.test(p.title);
 const KAHVALTI = /brunch|kahvaltı/i;
 function visible() {
   const q = query.trim().toLocaleLowerCase('tr');
@@ -145,6 +161,9 @@ function visible() {
     if (q && !(b.name + ' ' + p.title).toLocaleLowerCase('tr').includes(q)) return false;
     if (cat === 'restoran' || cat === 'kafe') return b.type === cat;
     if (cat === 'pastane') return PASTANE.test(p.title);
+    if (cat === 'sebze') return isVeg(p);
+    if (cat === 'ekmek') return isBread(p);
+    if (cat === 'hazir') return HAZIR.test(p.title);
     if (cat === 'kahvalti') return KAHVALTI.test(p.title);
     if (cat === 'simdi') return isOpen(p) && p.qty_available > 0;
     return true;
@@ -181,6 +200,8 @@ function render() {
     + rail('last', 'Kaçmadan kurtar', last)
     + rail('new', 'Yeni paketler', fresh)
     + rail('past', 'Pastane', open.filter(p => PASTANE.test(p.title)))
+    + rail('bread', 'Ekmek & fırın', open.filter(isBread))
+    + rail('veg', 'Sebze & meyve', open.filter(isVeg))
     + rail('rest', 'Restoranlar', open.filter(p => p.businesses.type === 'restoran'))
     + rail('kafe', 'Kafeler', open.filter(p => p.businesses.type === 'kafe'))
     + rail('out', 'Tükenenler', list.filter(p => p.qty_available === 0))
@@ -329,7 +350,7 @@ function openBag(id) {
   const pg = $('#page'); if (dmap) { dmap.remove(); dmap = null; }
   pg.className = 'page'; openPage();
   const heartC = `<button class="circ ${isFav(b.id) ? 'on' : ''}" data-fav="${b.id}" type="button" aria-label="Favorilere ekle veya çıkar">${ICON.heart}</button>`;
-  const catName = PASTANE.test(p.title) ? 'Pastane' : KAHVALTI.test(p.title) ? 'Kahvaltı' : typeLabel(b);
+  const catName = isVeg(p) ? 'Sebze & meyve' : isBread(p) ? 'Ekmek & fırın' : PASTANE.test(p.title) ? 'Pastane' : KAHVALTI.test(p.title) ? 'Kahvaltı' : typeLabel(b);
   const info = esc(p.description) || 'Mekânın gün sonunda kalan lezzetli ürünleri.';
   pg.innerHTML = `
     <div class="p-bar" id="pbar"><button class="circ" id="back2" type="button" aria-label="Geri">${ICON.back}</button><div class="tt">${esc(b.name)}</div>
@@ -524,7 +545,7 @@ async function renderBiz() {
   if (!myBiz) {
     root.innerHTML = `<form class="form" id="bizForm"><h3>İşletmeni kaydet</h3>
       <input name="name" required placeholder="İşletme adı" aria-label="İşletme adı">
-      <select name="type" aria-label="Tür"><option value="restoran">Restoran / Lokanta</option><option value="kafe">Kafe</option></select>
+      <select name="type" aria-label="Tür"><option value="restoran">Restoran / Lokanta</option><option value="kafe">Kafe</option><option value="firin">Fırın / Pastane</option><option value="manav">Manav</option><option value="market">Market</option></select>
       <input name="address" placeholder="Adres" aria-label="Adres">
       <button class="btn sec" id="bizLoc" type="button">Konumumu kullan</button>
       <p class="muted" id="bizLocNote">Mekânda isen "Konumumu kullan"a bas. Aksi hâlde seçili konum (${esc($('#locName').textContent)}) kullanılır.</p>
