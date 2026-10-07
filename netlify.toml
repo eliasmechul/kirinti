@@ -1,0 +1,4 @@
+# Netlify: depoyu bağlayınca her push otomatik yayınlanır.
+[build]
+  command = "sh build.sh"
+  publish = "dist"

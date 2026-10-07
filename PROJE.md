@@ -92,3 +92,8 @@ Too Good To Go'nun Gözat sekmesi örnek alındı: arama kutusu + filtre düğme
 - Yayından sonra yapılacak (Supabase panelinde): Authentication > URL Configuration > Site URL'yi yayın adresi yap; test için Authentication > Providers > Email > "Confirm email" kapatılabilir.
 - Uçtan uca veritabanı testi (rezervasyon, adet sınırı, iptal, teslim, puan, istatistik, şablon yayını) canlı fonksiyonlarda geri alınan bir blokta çalıştırıldı; hepsi geçti.
 
+## Netlify ile hep güncel yayın
+- Netlify sitesi oluşturuldu: `kirinti-app` (https://kirinti-app.netlify.app, id `63317cdb-ba4e-47e0-9b36-4f8fb46497c7`); henüz içine yayın yüklenmedi.
+- `netlify.toml` var: Netlify'da "Import from Git" ile depoyu bağlayınca build (`sh build.sh`) ve yayın (`dist/`) otomatik olur; her push siteyi günceller.
+- Netlify varsayılan olarak ekip girişi (SSO) ister; herkese açık yapmak için Site configuration > Access & security > Visitor access bölümünden kapat.
+
