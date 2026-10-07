@@ -97,3 +97,6 @@ Too Good To Go'nun Gözat sekmesi örnek alındı: arama kutusu + filtre düğme
 - `netlify.toml` var: Netlify'da "Import from Git" ile depoyu bağlayınca build (`sh build.sh`) ve yayın (`dist/`) otomatik olur; her push siteyi günceller.
 - Netlify varsayılan olarak ekip girişi (SSO) ister; herkese açık yapmak için Site configuration > Access & security > Visitor access bölümünden kapat.
 
+## Profesyonel yenileme (2026-10-07)
+Too Good To Go'nun (Almanya) sitesi ve uygulaması örnek alındı (site engelli olduğu için bilinen yapıya göre). Tanıtım sayfası baştan: sabit menü, gerçek uygulama ekranlı açılış (`assets/screens/`), FAO/UNEP gerçeklerini veren bant, 3 adım, kategoriler, "neden", işletme bölümü + form, SSS, bekleme listesi, sütunlu alt bilgi. Bekleme listesindeki gizli e-posta kutusu hatası düzeltildi. Uygulama: ilk açılışta 3 adımlı tanıtım, profil menüsü, yardım/SSS sayfası, kartlarda "Son N dk" etiketi.
+

@@ -4,83 +4,132 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kırıntı – İyi yemek çöpe gitmesin</title>
-<meta name="description" content="Restoran ve kafelerde kapanıştan önce artan taptaze yemekleri yarı fiyatına veya daha ucuza kurtar. Haritada bul, sürpriz paketini ayır, mekândan teslim al.">
+<meta name="description" content="Restoran, fırın, kafe ve manavlarda kapanıştan önce artan taptaze yemekleri çok uygun fiyata kurtar. Haritada bul, sürpriz paketini ayır, kodunla teslim al.">
 <meta name="theme-color" content="#FFD45E">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Kırıntı – İyi yemek çöpe gitmesin">
+<meta property="og:description" content="Mahalledeki restoran, fırın, kafe ve manavların artan yemeklerini sürpriz paket olarak uygun fiyata kurtar.">
+<meta property="og:locale" content="tr_TR">
 <link rel="icon" href="assets/logo/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="styles.css">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+ {"@type":"Organization","name":"Kırıntı","description":"Restoran, fırın, kafe ve manavların kapanıştan önce artan yemeklerini sürpriz paket olarak uygun fiyata sunan platform."},
+ {"@type":"FAQPage","mainEntity":[
+  {"@type":"Question","name":"Sürpriz paket nedir?","acceptedAnswer":{"@type":"Answer","text":"Kapanıştan önce satılamayan ama hâlâ taptaze ürünlerin, içeriği sürpriz olarak, normal fiyatın çok altında satıldığı pakettir."}},
+  {"@type":"Question","name":"Rezervasyonumu iptal edebilir miyim?","acceptedAnswer":{"@type":"Answer","text":"Evet, teslim saati başlamadan önce Siparişler sekmesinden iptal edebilirsin; stok geri açılır."}}
+ ]}]}
+</script>
 </head>
 <body>
+<a class="skip" href="#icerik">İçeriğe geç</a>
 
-<!-- ============ ÜST MENÜ ============ -->
 <header class="nav" id="top">
-  <nav class="nav-left" aria-label="Ana menü">
-    <a href="#neden">Neden Kırıntı?</a>
-    <a href="#nasil">Nasıl çalışır?</a>
-    <a href="#isletme">İşletmeler</a>
-  </nav>
-  <a href="#top" class="nav-logo" aria-label="Kırıntı ana sayfa"><img src="assets/logo/logo-horizontal.svg" alt="Kırıntı" width="150" height="40"></a>
-  <div class="nav-right">
-    <a href="#isletme" class="nav-link-biz">İşletme olarak katıl</a>
-    <a href="app/index.html" class="pill pill-white">Uygulamayı dene</a>
+  <div class="wrap nav-in">
+    <a href="#top" class="nav-logo" aria-label="Kırıntı ana sayfa"><img src="assets/logo/logo-horizontal.svg" alt="Kırıntı" width="140" height="38"></a>
+    <nav class="nav-links" aria-label="Ana menü">
+      <a href="#nasil">Nasıl çalışır?</a>
+      <a href="#kategoriler">Neler kurtarılır?</a>
+      <a href="#neden">Neden Kırıntı?</a>
+      <a href="#isletme">İşletmeler</a>
+      <a href="#sss">SSS</a>
+    </nav>
+    <a href="app/index.html" class="btn btn-dark nav-cta">Uygulamayı dene</a>
   </div>
 </header>
 
-<main>
-<!-- ============ HERO ============ -->
+<main id="icerik">
+
+<!-- ============ AÇILIŞ ============ -->
 <section class="hero">
-  <div class="hero-photo" aria-hidden="true">
-    <img src="assets/photos/phone.jpg" alt="" class="hero-img" fetchpriority="high">
-    <div class="hero-fade"></div>
-    <div class="hero-screen">
-      <div class="m-loc">Mevcut konum: Kadıköy</div>
-      <div class="m-card">
-        <div class="m-ph"><img src="assets/photos/croissant.jpg" alt=""><span class="m-rate">★ 4,8</span></div>
-        <div class="m-body"><b>Moda Kafe</b><span>Pastane ürünleri · 0,6 km</span><div class="m-price"><s>180 ₺</s> <b>60 ₺</b></div></div>
+  <div class="wrap hero-in">
+    <div class="hero-copy">
+      <p class="eyebrow">Gıda israfına karşı</p>
+      <h1>İyi yemek çöpe gitmesin</h1>
+      <p class="lead">Kırıntı, kapanıştan önce satılamayan ama hâlâ taptaze yemekleri mahalledeki restoran, fırın, kafe ve manavlardan <b>sürpriz paket</b> olarak uygun fiyata sana ulaştırır.</p>
+      <div class="hero-cta">
+        <a href="app/index.html" class="btn btn-dark btn-lg">Uygulamayı dene</a>
+        <a href="#isletme" class="btn btn-light btn-lg">İşletmeni kaydet</a>
       </div>
-      <div class="m-card m-card2"><div class="m-ph"><img src="assets/photos/pide.jpg" alt=""></div></div>
+      <div class="stores" aria-label="Mağaza uygulamaları">
+        <span class="store"><small>Yakında</small><b>App Store</b></span>
+        <span class="store"><small>Yakında</small><b>Google Play</b></span>
+      </div>
     </div>
-  </div>
-
-  <!-- Dar ekranlar için CSS telefon -->
-  <div class="hero-phone-sm" aria-hidden="true">
-    <div class="sm-screen">
-      <div class="sm-loc">Mevcut konum: Kadıköy</div>
-      <div class="sm-card"><img src="assets/photos/croissant.jpg" alt=""><div><b>Moda Kafe</b><span>Pastane ürünleri · 0,6 km</span><em><s>180 ₺</s> <strong>60 ₺</strong></em></div></div>
-    </div>
-  </div>
-
-  <div class="hero-copy">
-    <h1>İyi yemek çöpe gitmesin</h1>
-    <div class="hero-cta">
-      <a href="app/index.html" class="pill pill-white">Uygulamayı dene</a>
-      <a href="#isletme" class="pill pill-white">İşletmeni kaydet</a>
+    <div class="hero-phones" aria-hidden="false">
+      <figure class="phone phone-a"><img src="assets/screens/home.webp" alt="Kırıntı uygulaması: Keşfet ekranı, yakındaki paketler" width="300" height="649" fetchpriority="high"></figure>
+      <figure class="phone phone-b"><img src="assets/screens/detail.webp" alt="Kırıntı uygulaması: paket detayı ve rezerve et düğmesi" width="300" height="649" loading="lazy"></figure>
     </div>
   </div>
 </section>
 
-<!-- ============ TANITIM ============ -->
-<section class="intro">
-  <p class="intro-big">Kırıntı, <u>israfa karşı</u> mahalledeki restoran ve kafeleri seninle buluşturan bir platform.</p>
-  <p class="intro-sub">Kapanıştan önce satılamayan ama hâlâ taptaze yemekler, çöpe gitmesin diye uygun fiyata sürpriz paket olarak sunuluyor.</p>
-  <div class="stores">
-    <span class="store"><small>Yakında</small><b>App Store</b></span>
-    <span class="store"><small>Yakında</small><b>Google Play</b></span>
+<!-- ============ RAKAMLAR ============ -->
+<section class="facts" aria-label="Gıda israfı gerçekleri">
+  <div class="wrap facts-in">
+    <div class="fact"><b>1/3</b><span>Dünyada üretilen gıdanın yaklaşık üçte biri tüketilmeden israf ediliyor.</span></div>
+    <div class="fact"><b>%8–10</b><span>Küresel sera gazı salımının bu orandaki kısmı gıda israfından geliyor.</span></div>
+    <div class="fact"><b>3 adım</b><span>Keşfet, rezerve et, teslim al. Paketin çöpe gitmeden sofrana gelir.</span></div>
+  </div>
+  <p class="wrap facts-src">Kaynak: FAO ve UNEP gıda israfı raporları.</p>
+</section>
+
+<!-- ============ NASIL ÇALIŞIR ============ -->
+<section class="sec" id="nasil">
+  <div class="wrap">
+    <header class="sec-h">
+      <p class="eyebrow">Nasıl çalışır?</p>
+      <h2>Üç adımda paketin elinde</h2>
+      <p class="sub">Telefonundan birkaç dokunuşla yakınındaki bir mekânın artan yemeğini kurtar.</p>
+    </header>
+    <ol class="steps">
+      <li class="step">
+        <div class="step-shot"><img src="assets/screens/list.webp" alt="Kırıntı uygulaması: paket listesi ve filtreler" width="300" height="649" loading="lazy"></div>
+        <span class="step-n" aria-hidden="true">1</span>
+        <h3>Yakınındakini keşfet</h3>
+        <p>Haritada veya listede mekânları gez. Teslim saati, tür, mesafe ve fiyata göre filtrele.</p>
+      </li>
+      <li class="step">
+        <div class="step-shot"><img src="assets/screens/detail.webp" alt="Kırıntı uygulaması: paket detayı" width="300" height="649" loading="lazy"></div>
+        <span class="step-n" aria-hidden="true">2</span>
+        <h3>Sürpriz paketini ayır</h3>
+        <p>Beğendiğin paketi seç, kaydırarak onayla. Teslim saati başlamadan istediğin zaman iptal edebilirsin.</p>
+      </li>
+      <li class="step">
+        <div class="step-shot"><img src="assets/screens/code.webp" alt="Kırıntı uygulaması: teslim kodu ekranı" width="300" height="649" loading="lazy"></div>
+        <span class="step-n" aria-hidden="true">3</span>
+        <h3>Kodunla teslim al</h3>
+        <p>Belirtilen saatte mekâna git, 4 haneli kodunu göster ve paketini al. Afiyet olsun.</p>
+      </li>
+    </ol>
   </div>
 </section>
 
-<!-- ============ NEDEN ============ -->
-<section class="why" id="neden">
-  <div class="why-kicker">Neden</div>
-  <h2 class="why-title">Kırıntı</h2>
-  <div class="why-grid">
-    <div class="why-col why-left">
-      <div class="why-item"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 9h.01M18 15h.01"/></svg><p>Yarı fiyatına veya daha ucuza güzel yemek</p></div>
-      <div class="why-item"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg><p>Gıda israfını azaltarak çevreye katkı yap</p></div>
+<!-- ============ KATEGORİLER ============ -->
+<section class="sec sec-tint" id="kategoriler">
+  <div class="wrap">
+    <header class="sec-h">
+      <p class="eyebrow">Neler kurtarılır?</p>
+      <h2>Her damak için bir paket</h2>
+      <p class="sub">Restoranlardan fırınlara, kafelerden manavlara kadar günün artan ürünleri.</p>
+    </header>
+    <div class="cats">
+      <a class="cat" href="app/index.html"><img src="assets/photos/pide.jpg" alt="" loading="lazy" width="400" height="300"><span>Yemek</span></a>
+      <a class="cat" href="app/index.html"><img src="assets/photos/croissant.jpg" alt="" loading="lazy" width="400" height="300"><span>Pastane</span></a>
+      <a class="cat" href="app/index.html"><img src="assets/visuals/bread.svg" alt="" loading="lazy" width="400" height="300"><span>Ekmek &amp; fırın</span></a>
+      <a class="cat" href="app/index.html"><img src="assets/visuals/vegetables.svg" alt="" loading="lazy" width="400" height="300"><span>Sebze &amp; meyve</span></a>
+      <a class="cat" href="app/index.html"><img src="assets/photos/breakfast.jpg" alt="" loading="lazy" width="400" height="300"><span>Kahvaltı</span></a>
+      <a class="cat" href="app/index.html"><img src="assets/photos/coffee.jpg" alt="" loading="lazy" width="400" height="300"><span>Kafe</span></a>
     </div>
-    <div class="why-bag" aria-hidden="true">
+  </div>
+</section>
+
+<!-- ============ NEDEN KIRINTI ============ -->
+<section class="sec" id="neden">
+  <div class="wrap why">
+    <div class="why-art" aria-hidden="true">
       <svg viewBox="0 0 360 440">
         <path d="M70 120L290 120L320 420L40 420Z" fill="#FFD45E"/>
         <path d="M70 120L290 120L296 150L64 150Z" fill="#F5BE3A"/>
@@ -90,48 +139,32 @@
         <g transform="translate(116 206) scale(1.9)"><defs><mask id="bm"><rect width="64" height="64" fill="#fff"/><path d="M16 31L22 41M28 27L35 40M41 30L47 40" stroke="#000" stroke-width="4.6" stroke-linecap="round" fill="none"/></mask></defs><path d="M3 37C3 25 15 16 32 16C49 16 61 25 61 37C61 46 56 51 47 51H17C8 51 3 46 3 37Z" fill="#2A2410" mask="url(#bm)"/><circle cx="19" cy="57" r="1.9" fill="#2A2410"/><circle cx="31" cy="58.8" r="1.4" fill="#2A2410"/><circle cx="42" cy="57" r="1.9" fill="#2A2410"/><circle cx="52" cy="56.6" r="1.2" fill="#2A2410"/></g>
       </svg>
     </div>
-    <div class="why-col why-right">
-      <div class="why-item"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><p>Çevrendeki yemekleri kurtar</p></div>
-      <div class="why-item"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l1 12H5z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><p>Yerel restoran ve kafelerde yeni lezzetler dene</p></div>
+    <div class="why-body">
+      <p class="eyebrow">Neden Kırıntı?</p>
+      <h2>Cebine, mahalleline ve gezegene iyi gelir</h2>
+      <ul class="benefits">
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3"/></svg><div><h3>Uygun fiyat</h3><p>Paketler normal fiyatın çoğu zaman yarısı veya daha azı.</p></div></li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg><div><h3>Daha az israf</h3><p>Çöpe gidecek yemeği ve üretimine harcanan kaynakları kurtarırsın.</p></div></li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><div><h3>Yeni lezzetler</h3><p>Yakınındaki restoran, fırın, kafe ve manavları keşfet.</p></div></li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l1 12H5z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><div><h3>Kolay teslim</h3><p>Rezerve et, kodunu göster, paketini al. Sıra beklemek yok.</p></div></li>
+      </ul>
     </div>
-  </div>
-</section>
-
-<!-- ============ ŞERİT ============ -->
-<div class="marquee" aria-hidden="true">
-  <div class="marquee-track">
-    <span>Simit</span><span>Pide</span><span>Lahmacun</span><span>Börek</span><span>Baklava</span><span>Pasta</span><span>Köfte</span><span>Çorba</span><span>Mantı</span><span>Sandviç</span><span>Kumpir</span><span>Ekmek</span><span>Sebze</span><span>Meyve</span><span>Kahvaltı</span><span>Kahve</span>
-    <span>Simit</span><span>Pide</span><span>Lahmacun</span><span>Börek</span><span>Baklava</span><span>Pasta</span><span>Köfte</span><span>Çorba</span><span>Mantı</span><span>Sandviç</span><span>Kumpir</span><span>Ekmek</span><span>Sebze</span><span>Meyve</span><span>Kahvaltı</span><span>Kahve</span>
-  </div>
-</div>
-
-<!-- ============ NASIL ÇALIŞIR ============ -->
-<section class="steps" id="nasil" aria-roledescription="carousel" aria-label="Uygulama nasıl kullanılır">
-  <div class="steps-copy">
-    <div class="kicker">Uygulama nasıl kullanılır</div>
-    <h2 id="stepTitle">1. Adım</h2>
-    <p id="stepText">Yakınındaki restoran ve kafelerde kapanıştan önce ayrılan sürpriz paketleri keşfet.</p>
-    <div class="steps-ctrl">
-      <button type="button" id="prev" aria-label="Önceki adım">←</button>
-      <span class="dots" id="dots"><i class="on"></i><i></i><i></i><i></i></span>
-      <button type="button" id="next" aria-label="Sonraki adım">→</button>
-    </div>
-  </div>
-  <div class="steps-photos">
-    <img id="stepImg" src="assets/photos/baker.jpg" alt="Fırın tezgâhı" class="steps-big">
-    <img id="stepImg2" src="assets/photos/croissant.jpg" alt="Taze kruvasan" class="steps-small">
   </div>
 </section>
 
 <!-- ============ İŞLETMELER ============ -->
-<section class="biz" id="isletme">
-  <div class="biz-photo"><img src="assets/photos/breakfast.jpg" alt="Türk kahvaltı sofrası" loading="lazy"></div>
-  <div class="biz-body">
-    <h2>İşletmeler için çözümlerimiz</h2>
-    <p class="biz-lead">Restoran ve kafeler için, artan yemekleri gelire dönüştüren kurulumu kolay çözümler.</p>
-    <div class="biz-cards">
-      <article><h3>Sürpriz Paketler</h3><p>Satılmayan yemeği Kırıntı uygulamasında sürpriz paket olarak sat; müşteriler belirlediğin saatte gelip alsın.</p><small>Kimler için</small><b>Restoran, Kafe</b></article>
-      <article><h3>İşletme Paneli</h3><p>Paket sayısını, fiyatı ve teslim saatini belirle; siparişleri takip et, teslimi kodla onayla.</p><small>Kimler için</small><b>Restoran, Kafe</b></article>
+<section class="sec sec-dark" id="isletme">
+  <div class="wrap biz">
+    <div class="biz-copy">
+      <p class="eyebrow">İşletmeler için</p>
+      <h2>Artan yemeği gelire dönüştür</h2>
+      <p class="sub">Restoran, fırın, kafe veya manav: gün sonunda kalan ürünleri çöpe atmadan yeni müşterilere ulaştır.</p>
+      <ul class="checks">
+        <li>Paket sayısını, fiyatı ve teslim saatini kendin belirle.</li>
+        <li>Tekrarlayan paketleri bir kez kur, her gün otomatik yayınlansın.</li>
+        <li>Teslimi müşterinin 4 haneli koduyla saniyeler içinde onayla.</li>
+        <li>Satışlarını, kazancını ve müşteri puanlarını panelden takip et.</li>
+      </ul>
     </div>
     <form class="form" data-form="business" novalidate>
       <h3>İşletmeni kaydet</h3>
@@ -140,33 +173,72 @@
       <label>E-posta<input name="email" type="email" required maxlength="160" autocomplete="email"></label>
       <label>İşletme türü<select name="type"><option value="restoran">Restoran / Lokanta</option><option value="kafe">Kafe</option><option value="firin">Fırın / Pastane</option><option value="manav">Manav</option><option value="market">Market</option></select></label>
       <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-      <button class="pill pill-green" type="submit">Başvur</button>
+      <button class="btn btn-dark btn-block" type="submit">Başvur</button>
       <p class="form-msg" role="status" aria-live="polite"></p>
     </form>
   </div>
 </section>
 
-<!-- ============ ERKEN ERİŞİM ============ -->
-<section class="join" id="bekleme">
-  <h2>Açıldığında ilk sen öğren</h2>
-  <p>Şehrin açılınca haber verelim. Spam yok, yalnızca bir e-posta.</p>
-  <form class="form-inline" data-form="waitlist" novalidate>
-    <label class="sr">E-posta<input name="email" type="email" required maxlength="160" placeholder="E-posta adresin" autocomplete="email"></label>
-    <label class="sr">Şehir<select name="city"><option>İstanbul</option><option>Ankara</option><option>İzmir</option><option>Bursa</option><option>Antalya</option><option>Diğer</option></select></label>
-    <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-    <button class="pill pill-green" type="submit">Listeye ekle</button>
-  </form>
-  <p class="form-msg" role="status" aria-live="polite"></p>
+<!-- ============ SSS ============ -->
+<section class="sec" id="sss">
+  <div class="wrap faq-wrap">
+    <header class="sec-h sec-h-left">
+      <p class="eyebrow">Sık sorulanlar</p>
+      <h2>Aklına takılanlar</h2>
+    </header>
+    <div class="faq">
+      <details><summary>Sürpriz paket nedir?</summary><p>Kapanıştan önce satılamayan ama hâlâ taptaze ürünlerin, içeriği sürpriz olarak, normal fiyatın çok altında satıldığı pakettir. İçerik gün sonuna göre değişir; alerjen bilgisi paket sayfasında yer alır.</p></details>
+      <details><summary>Ödemeyi nasıl yaparım, paketi nasıl alırım?</summary><p>Uygulamada paketi rezerve eder, mekânın belirttiği saat aralığında 4 haneli kodunu göstererek teslim alırsın. Ödeme adımı şu anda test aşamasındadır; gerçek kart tahsilatı açıldığında duyuracağız.</p></details>
+      <details><summary>Rezervasyonumu iptal edebilir miyim?</summary><p>Evet. Teslim saati başlamadan önce Siparişler sekmesinden iptal edebilirsin; paket stoğa geri döner. Ödeme aktif olduğunda tutar sana iade edilecek.</p></details>
+      <details><summary>Paketimi zamanında alamazsam ne olur?</summary><p>Teslim saati geçen siparişler “teslim alınmadı” olarak kapanır. Bu yüzden saat aralığını rezervasyondan önce kontrol etmeni öneririz.</p></details>
+      <details><summary>İşletmem nasıl katılır?</summary><p>Yukarıdaki formu doldur, seninle iletişime geçelim. Katıldıktan sonra paket sayısını, fiyatı ve saati kendin belirler, teslimleri kodla onaylarsın.</p></details>
+      <details><summary>Hangi şehirlerdesiniz?</summary><p>Henüz yayında değiliz. İlk şehrimiz açılırken haber almak için aşağıdaki listeye katılabilirsin.</p></details>
+    </div>
+  </div>
 </section>
+
+<!-- ============ BEKLEME LİSTESİ ============ -->
+<section class="join" id="liste">
+  <div class="wrap join-in">
+    <h2>Açıldığında ilk sen öğren</h2>
+    <p>Şehrin açılınca haber verelim. Spam yok, yalnızca bir e-posta.</p>
+    <form class="form-inline" data-form="waitlist" novalidate>
+      <input name="email" type="email" required maxlength="160" placeholder="E-posta adresin" autocomplete="email" aria-label="E-posta">
+      <select name="city" aria-label="Şehir"><option>İstanbul</option><option>Ankara</option><option>İzmir</option><option>Bursa</option><option>Antalya</option><option>Diğer</option></select>
+      <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <button class="btn btn-dark" type="submit">Listeye ekle</button>
+    </form>
+    <p class="form-msg" role="status" aria-live="polite"></p>
+  </div>
+</section>
+
 </main>
 
-<!-- ============ ALT BİLGİ ============ -->
 <footer class="foot">
-  <div class="foot-top">
-    <a href="#top" aria-label="Kırıntı"><img src="assets/logo/logo-horizontal.svg" alt="Kırıntı" width="150" height="40"></a>
-    <nav aria-label="Alt menü"><a href="#neden">Neden Kırıntı?</a><a href="#nasil">Nasıl çalışır?</a><a href="#isletme">İşletmeler</a><a href="mailto:merhaba@kirinti.com.tr">İletişim</a></nav>
+  <div class="wrap foot-in">
+    <div class="foot-brand">
+      <a href="#top" aria-label="Kırıntı"><img src="assets/logo/logo-horizontal-light.svg" alt="Kırıntı" width="140" height="38"></a>
+      <p>İyi yemek çöpe gitmesin. Mahalledeki artan yemekleri uygun fiyata kurtar.</p>
+    </div>
+    <nav class="foot-col" aria-label="Kırıntı">
+      <h4>Kırıntı</h4>
+      <a href="#nasil">Nasıl çalışır?</a>
+      <a href="#neden">Neden Kırıntı?</a>
+      <a href="#sss">Sık sorulanlar</a>
+    </nav>
+    <nav class="foot-col" aria-label="İşletmeler">
+      <h4>İşletmeler</h4>
+      <a href="#isletme">Başvur</a>
+      <a href="app/index.html">İşletme paneli</a>
+    </nav>
+    <nav class="foot-col" aria-label="Yasal">
+      <h4>Yasal</h4>
+      <span>Gizlilik &amp; KVKK <em>(yakında)</em></span>
+      <span>Kullanım koşulları <em>(yakında)</em></span>
+      <span>Çerez politikası <em>(yakında)</em></span>
+    </nav>
   </div>
-  <div class="foot-bottom"><span>© 2026 Kırıntı</span><span>Gizlilik &amp; KVKK · Kullanım Koşulları · Çerez Politikası <em>(yakında)</em></span></div>
+  <div class="wrap foot-bottom"><span>© 2026 Kırıntı</span><span>Gıda israfına karşı, mahalleden başlayarak.</span></div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>

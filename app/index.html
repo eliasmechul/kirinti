@@ -90,10 +90,17 @@
       <div class="scroll pad">
         <h2 class="h">Profil</h2>
         <div class="authbar"></div>
+        <nav class="menu" aria-label="Profil menüsü">
+          <button type="button" data-go="siparis"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l1 12H5z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span>Siparişlerim</span><i aria-hidden="true">›</i></button>
+          <button type="button" data-go="favori"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></svg><span>Favorilerim</span><i aria-hidden="true">›</i></button>
+          <button type="button" data-onb><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg><span>Nasıl çalışır?</span><i aria-hidden="true">›</i></button>
+          <button type="button" data-help><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01"/></svg><span>Yardım ve sık sorulanlar</span><i aria-hidden="true">›</i></button>
+        </nav>
         <details class="bizbox" id="bizBox">
-          <summary>İşletme paneli <small>Restoran veya kafe sahibi misin?</small></summary>
+          <summary>İşletme paneli <small>Restoran, fırın, kafe veya manav sahibi misin?</small></summary>
           <div id="bizRoot"></div>
         </details>
+        <p class="about">Kırıntı · Sürüm 1.0<br>Ödeme şu an test aşamasında; gerçek tahsilat yapılmaz.</p>
       </div>
     </section>
   </main>

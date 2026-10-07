@@ -58,6 +58,8 @@ const typeLabel = b => TYPE_NAME[b.type] || 'Restoran';
 const dist = p => p._d ??= km(me, [p.businesses.lat, p.businesses.lng]);
 const fmtDist = d => d < 1 ? `${Math.max(50, Math.round(d * 10) * 100)} m` : `${d.toFixed(1)} km`;
 const pct = p => Math.round((1 - p.price / p.original_price) * 100);
+const minsLeft = p => { const [h, m] = hm(p.pickup_to).split(':').map(Number), [nh, nm] = nowTR().split(':').map(Number); return (h * 60 + m) - (nh * 60 + nm); };
+const hot = p => p.qty_available > 0 && isOpen(p) && minsLeft(p) > 0 && minsLeft(p) <= 60;
 const stars = id => ratings[id] ? `★ ${Number(ratings[id].avg_rating).toFixed(1).replace('.', ',')} (${ratings[id].n})` : '';
 const timeLabel = p => isOpen(p) ? 'Şimdi teslim alınabilir' : ended(p) ? 'Süre doldu' : `Bugün ${hm(p.pickup_from)} - ${hm(p.pickup_to)}`;
 const isFav = id => favs.includes(id);
@@ -173,7 +175,7 @@ function card(p) {
   const b = p.businesses;
   return `<article class="card" data-id="${p.id}">
     <div class="ph"><img class="cover" src="${photo(p)}" alt="${esc(p.title)}" loading="lazy" decoding="async">
-      <span class="tagq ${p.qty_available ? '' : 'out'}">${p.qty_available ? p.qty_available + ' kaldı' : 'Tükendi'}</span>
+      <div class="tags"><span class="tagq ${p.qty_available ? '' : 'out'}">${p.qty_available ? p.qty_available + ' kaldı' : 'Tükendi'}</span>${hot(p) ? `<span class="tagq hot">Son ${minsLeft(p)} dk</span>` : ''}</div>
       <div class="logo-c">${initial(b)}</div></div>
     <div class="body"><div class="top-row"><div class="nm">${esc(b.name)}</div>
       <button class="heart-o ${isFav(b.id) ? 'on' : ''}" data-fav="${b.id}" aria-label="Favorilere ekle veya çıkar" type="button">${ICON.heart}</button></div>
@@ -556,6 +558,43 @@ function showCode(o, p) {
   $('#back').onclick = closePage; $('#ok').onclick = closePage;
 }
 
+// ---------- Yardım ve ilk açılış ----------
+const FAQ = [
+  ['Sürpriz paket nedir?', 'Kapanıştan önce satılamayan ama hâlâ taptaze ürünlerin, içeriği sürpriz olarak, normal fiyatın çok altında satıldığı pakettir. İçerik gün sonuna göre değişir; alerjen bilgisi paket sayfasındadır.'],
+  ['Paketimi nasıl alırım?', 'Paketi rezerve et, belirtilen saat aralığında mekâna git ve 4 haneli teslim kodunu göster. Kodu Siparişler sekmesinde her zaman bulabilirsin.'],
+  ['Siparişimi iptal edebilir miyim?', 'Evet. Teslim saati başlamadan önce Siparişler sekmesinden iptal edebilirsin; paket stoğa geri döner. Ödeme açıldığında tutar iade edilir.'],
+  ['Paketi zamanında alamazsam?', 'Teslim saati geçen sipariş “teslim alınmadı” olarak kapanır. Rezerve etmeden önce saat aralığını kontrol et.'],
+  ['Ödeme nasıl çalışıyor?', 'Ödeme adımı şu an test aşamasındadır; gerçek kart tahsilatı yapılmaz. Gerçek ödeme açıldığında duyuracağız.'],
+  ['İşletmemi nasıl eklerim?', 'Profil sekmesindeki İşletme paneli bölümünden mekânını kaydet, paketlerini ekle veya tekrarlayan paket kur.'],
+];
+function showHelp() {
+  const pg = $('#page'); pg.className = 'page'; openPage();
+  pg.innerHTML = `<div class="l-head"><button class="circ" id="back" type="button" aria-label="Geri">${ICON.back}</button><div class="tt">Yardım</div></div>
+    <div class="l-body"><div class="faq-app">${FAQ.map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join('')}</div>
+    <p class="muted" style="text-align:center">Aradığını bulamadın mı? Yakında destek hattı eklenecek.</p></div>`;
+  $('#back').onclick = closePage;
+}
+const ONB = [
+  [ICON.pin, 'Yakınındakini keşfet', 'Restoran, fırın, kafe ve manavların kapanıştan önce artan yemeklerini haritada ve listede gör.'],
+  [ICON.bag, 'Sürpriz paketini ayır', 'Beğendiğin paketi kaydırarak onayla. Teslim saati başlamadan istediğin zaman iptal edebilirsin.'],
+  [ICON.clock, 'Kodunla teslim al', 'Belirtilen saatte mekâna git, 4 haneli kodunu göster ve paketini al. Yemek çöpe gitmesin.'],
+];
+function showOnboarding() {
+  let i = 0; const pg = $('#page'); pg.className = 'page onb'; openPage();
+  const draw = () => {
+    const [ic, t, p] = ONB[i], last = i === ONB.length - 1;
+    pg.innerHTML = `<button class="onb-skip" id="onbSkip" type="button">${last ? '' : 'Atla'}</button>
+      <div class="onb-art" aria-hidden="true">${ic}</div>
+      <h2>${t}</h2><p>${p}</p>
+      <div class="onb-dots" aria-hidden="true">${ONB.map((_, k) => `<i class="${k === i ? 'on' : ''}"></i>`).join('')}</div>
+      <button class="btn" id="onbNext" type="button">${last ? 'Başlayalım' : 'İleri'}</button>`;
+    $('#onbNext').onclick = () => { if (last) done(); else { i++; draw(); } };
+    $('#onbSkip').onclick = done;
+  };
+  const done = () => { try { localStorage.setItem('kirinti_onb', '1'); } catch {} closePage(); };
+  draw();
+}
+
 // ---------- Siparişler ----------
 const canCancel = o => {
   const g = o.bags; if (o.status !== 'bekliyor') return false;
@@ -754,6 +793,9 @@ document.addEventListener('click', async e => {
   const c = t.closest('.card[data-id], .pick-row[data-id]');
   if (c) return openBag(c.dataset.id);
   if (t.closest('[data-fclear]')) { F = { ...F0 }; bq = ''; $('#q').value = ''; saveF(); return renderBrowse(); }
+  const go = t.closest('[data-go]'); if (go) return setTab(go.dataset.go);
+  if (t.closest('[data-help]')) return showHelp();
+  if (t.closest('[data-onb]')) return showOnboarding();
   const cx = t.closest('[data-cancel]'); if (cx) return cancelOrder(cx.dataset.cancel);
   const rt = t.closest('[data-rate]'); if (rt) return rateSheet(rt.dataset.rate);
   const od = t.closest('.order[data-oid]');
@@ -785,6 +827,7 @@ $('#tab-profil').addEventListener('click', async e => {
 
 renderAuthBars();
 loadBags();
+try { if (!localStorage.getItem('kirinti_onb')) setTimeout(showOnboarding, 400); } catch {}
 // Uygulama arka plandan dönünce ve her 2 dakikada bir paketleri yenile (stok, süre ve gün değişimi için)
 document.addEventListener('visibilitychange', () => { if (!document.hidden) loadBags(); });
 setInterval(() => { if (!document.hidden) loadBags(); }, 120000);
