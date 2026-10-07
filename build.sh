@@ -7,4 +7,5 @@ cp index.html styles.css script.js dist/
 cp -R app assets dist/
 rm -f dist/assets/photos/CREDITS.md
 cp assets/photos/CREDITS.md dist/assets/CREDITS.md
+cp supabase/_headers dist/_headers 2>/dev/null || true
 echo "dist/ hazır: $(du -sh dist | cut -f1)"

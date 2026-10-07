@@ -86,3 +86,9 @@ Veritabanı canlıya uygulandı (bkz. `supabase/README.md`). Uygulamada: sipari�
 ## Gözat: arama, filtre ve harita (2026-10-07)
 Too Good To Go'nun Gözat sekmesi örnek alındı: arama kutusu + filtre düğmesi (aktif filtre sayısı rozeti) + Harita/Liste anahtarı. Harita artık fiyat değil **mekân işaretleri** gösterir (baş harf + kalan paket sayısı); işarete dokununca altta mekânın paketleri listelenir. Keşfet'teki arama kutusu Gözat'ın liste görünümünü açar. Filtre paneli: sıralama (mesafe, fiyat, puan, bitiş saati), teslim saati (şimdi, sabah, öğle, akşam, gece), kategori (çoklu seçim), mesafe, en yüksek fiyat, tükenenleri gizle; sonuç sayısı canlı güncellenir, seçimler cihazda saklanır.
 
+## Canlıya alma (2026-10-07)
+- Canlı veritabanında 8 demo mekân için günlük şablon var; paketler her gün 00:05'te (TR) otomatik yayınlanır, `supabase/seed_demo.sql`. Süresi geçen siparişler 15 dakikada bir `gelmedi` olur.
+- Yayın paketi: `sh build.sh` → `dist/` (içinde `_headers`); zip: `kirinti-yayin.zip`. Netlify Drop (app.netlify.com/drop) veya herhangi bir statik barındırma ile yayınlanır (HTTPS gerekir: PWA için).
+- Yayından sonra yapılacak (Supabase panelinde): Authentication > URL Configuration > Site URL'yi yayın adresi yap; test için Authentication > Providers > Email > "Confirm email" kapatılabilir.
+- Uçtan uca veritabanı testi (rezervasyon, adet sınırı, iptal, teslim, puan, istatistik, şablon yayını) canlı fonksiyonlarda geri alınan bir blokta çalıştırıldı; hepsi geçti.
+
