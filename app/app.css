@@ -374,3 +374,14 @@ button,a,.card,summary{touch-action:manipulation}
 .onb-dots i{width:8px;height:8px;border-radius:50%;background:#2A241044}
 .onb-dots i.on{width:24px;border-radius:4px;background:var(--ink)}
 .page.onb .btn{width:100%;max-width:340px;background:var(--ink);color:#fff;margin-top:8px}
+
+/* Başlıklar: tanıtım sitesiyle aynı modern yazı tipi */
+:root{--display:'Bricolage Grotesque','DM Sans',system-ui,sans-serif}
+.hero-h,.h,.sec-h h3,.page.onb h2,.ready h2,.sheet-body h3,.l-head .tt,.p-name,.pk-head b{font-family:var(--display)}
+.hero-h{font-weight:800;letter-spacing:-.04em;font-size:40px;line-height:1}
+.hero-h span{font-weight:700}
+.h{font-weight:800;letter-spacing:-.035em;font-size:36px}
+.sec-h h3{font-weight:700;letter-spacing:-.03em}
+.page.onb h2{font-weight:800;letter-spacing:-.035em;font-size:34px}
+.ready h2{font-weight:800;letter-spacing:-.03em}
+.codebox{font-family:var(--display);font-weight:800}
