@@ -183,6 +183,7 @@
     'Mağaza uygulamaları': 'Store apps', 'Gıda israfı gerçekleri': 'Food waste facts', 'Profil menüsü': 'Profile menu', 'Kategoriler': 'Categories', 'Görünüm': 'View',
     'Ödeme yöntemi': 'Payment method', 'Bağış tutarı': 'Donation amount', 'Favorilere ekle veya çıkar': 'Add or remove from favourites',
     'Filtreler': 'Filters', 
+    'Hesabımı sil': 'Delete my account', 'Hesabı sil': 'Delete account', 'Hesabın, siparişlerin, favorilerin ve yorumların kalıcı olarak silinir. Bu işlem geri alınamaz.': 'Your account, orders, favourites and reviews will be permanently deleted. This cannot be undone.', 'Evet, hesabımı sil': 'Yes, delete my account', 'Hesap silinemedi: ': 'Could not delete account: ', 'Hesabın silindi': 'Your account was deleted',
     // ---- Aylar
     'Ocak': 'January', 'Şubat': 'February', 'Mart': 'March', 'Nisan': 'April', 'Mayıs': 'May', 'Haziran': 'June', 'Temmuz': 'July',
     'Ağustos': 'August', 'Eylül': 'September', 'Ekim': 'October', 'Kasım': 'November', 'Aralık': 'December'

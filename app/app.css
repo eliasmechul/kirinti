@@ -468,3 +468,7 @@ button,a,.card,summary{touch-action:manipulation}
 .langseg{display:inline-flex;background:var(--pink-xl);border-radius:999px;padding:4px}
 .langseg button{border:0;background:none;border-radius:999px;min-height:36px;padding:0 16px;font:600 14px 'DM Sans',sans-serif;color:var(--ink)}
 .langseg button.on{background:var(--ink);color:#fff}
+
+/* Hesabı sil */
+.linkbtn{display:block;margin:6px 0 0;background:none;border:0;color:#B3261E;font:500 13px inherit;text-decoration:underline;min-height:44px;cursor:pointer}
+.btn.danger{background:#B3261E;color:#fff}
