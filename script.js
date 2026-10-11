@@ -1,27 +1,19 @@
-// Kırıntı tanıtım sitesi: adım carousel'i ve veritabanına bağlı formlar.
+// Kırıntı tanıtım sitesi: veritabanına bağlı formlar (işletme başvurusu ve bekleme listesi).
 const SUPABASE_URL = 'https://dkcwjgonziqizaouypsd.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_U8w5lw--srZQ9auJAeLTIQ_oxR065hS'; // herkese açık anahtar; formlar yalnızca EKLEYEBİLİR, okuyamaz (RLS)
 const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
-// ---- Adımlar ----
-const STEPS = [
-  { t: '1. Adım', p: 'Yakınındaki restoran ve kafelerde kapanıştan önce ayrılan sürpriz paketleri keşfet.', img: 'assets/photos/baker.jpg', alt: 'Fırın tezgâhı', img2: 'assets/photos/croissant.jpg', alt2: 'Taze kruvasan' },
-  { t: '2. Adım', p: 'Seçtiğin paketi onayla ve uygulama içinden güvenle öde.', img: 'assets/photos/coffee.jpg', alt: 'Latte', img2: 'assets/photos/cake.jpg', alt2: 'Pasta dilimi' },
-  { t: '3. Adım', p: 'Belirtilen saat aralığında mekâna git, kodunu göster ve paketini teslim al.', img: 'assets/photos/pide.jpg', alt: 'Taze pide', img2: 'assets/photos/lahmacun.jpg', alt2: 'Lahmacun' },
-  { t: '4. Adım', p: 'Yemeği kurtardın. Hem cüzdanın hem gezegen teşekkür ediyor.', img: 'assets/photos/breakfast.jpg', alt: 'Türk kahvaltısı', img2: 'assets/photos/meze.jpg', alt2: 'Meze tabağı' },
-];
-let cur = 0;
-const $ = s => document.querySelector(s);
-function showStep(i) {
-  cur = (i + STEPS.length) % STEPS.length;
-  const s = STEPS[cur];
-  $('#stepTitle').textContent = s.t; $('#stepText').textContent = s.p;
-  $('#stepImg').src = s.img; $('#stepImg').alt = s.alt;
-  $('#stepImg2').src = s.img2; $('#stepImg2').alt = s.alt2;
-  document.querySelectorAll('#dots i').forEach((d, k) => d.classList.toggle('on', k === cur));
+// Gerçek fotoğraf dosyası yoksa aynı adlı çizime dön (assets/photos/x.jpg yoksa assets/visuals/x.svg)
+function photoFallback(i) {
+  if (i.tagName !== 'IMG' || i.dataset.fb) return;
+  const s = i.getAttribute('src') || '';
+  if (/assets\/photos\/[a-z]+\.jpg$/.test(s)) { i.dataset.fb = '1'; i.src = s.replace(/photos\/([a-z]+)\.jpg$/, 'visuals/$1.svg'); }
 }
-$('#prev').onclick = () => showStep(cur - 1);
-$('#next').onclick = () => showStep(cur + 1);
+document.addEventListener('error', e => photoFallback(e.target), true);
+const sweepPhotos = () => document.querySelectorAll('img').forEach(i => { if (i.complete && i.naturalWidth === 0) photoFallback(i); });
+document.addEventListener('DOMContentLoaded', sweepPhotos); window.addEventListener('load', sweepPhotos);
+
+const $ = s => document.querySelector(s);
 
 // ---- Formlar ----
 const TABLES = { waitlist: 'waitlist', business: 'business_applications' };
@@ -48,3 +40,12 @@ document.querySelectorAll('form[data-form]').forEach(form => {
     form.reset(); say(OK[kind]);
   });
 });
+
+// ---- Dil düğmesi ----
+const langBtn = $('#langBtn');
+if (langBtn) {
+  const cur = window.KIRINTI_LANG || 'tr';
+  langBtn.textContent = cur === 'en' ? 'TR' : 'EN';
+  langBtn.setAttribute('aria-label', cur === 'en' ? 'Türkçe' : 'English');
+  langBtn.onclick = () => window.setKirintiLang && window.setKirintiLang(cur === 'en' ? 'tr' : 'en');
+}
