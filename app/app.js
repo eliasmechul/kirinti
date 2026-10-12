@@ -64,7 +64,7 @@ function defaultPic(p) {
   return ty === 'kafe' ? '../assets/photos/coffee.jpg' : '../assets/photos/soup.jpg';
 }
 const initial = b => esc(b.name.trim()[0] || '?');
-const TYPE_NAME = { restoran: 'Restoran', kafe: 'Kafe', firin: 'Fırın', manav: 'Manav', market: 'Market' };
+const TYPE_NAME = { restoran: 'Restoran', kafe: 'Kafe', firin: 'Fırın', manav: 'Manav', market: 'Market', sarkuteri: 'Şarküteri', otel: 'Otel' };
 const typeLabel = b => TYPE_NAME[b.type] || 'Restoran';
 const dist = p => p._d ??= km(me, [p.businesses.lat, p.businesses.lng]);
 const fmtDist = d => d < 1 ? `${Math.max(50, Math.round(d * 10) * 100)} m` : `${d.toFixed(1)} km`;
@@ -766,7 +766,7 @@ async function renderBiz() {
   if (!myBiz) {
     root.innerHTML = `<form class="form" id="bizForm"><h3>İşletmeni kaydet</h3>
       <input name="name" required placeholder="İşletme adı" aria-label="İşletme adı">
-      <select name="type" aria-label="Tür"><option value="restoran">Restoran / Lokanta</option><option value="kafe">Kafe</option><option value="firin">Fırın / Pastane</option><option value="manav">Manav</option><option value="market">Market</option></select>
+      <select name="type" aria-label="Tür"><option value="restoran">Restoran / Lokanta</option><option value="kafe">Kafe</option><option value="firin">Fırın / Pastane</option><option value="manav">Manav</option><option value="market">Market</option><option value="sarkuteri">Şarküteri / Kasap</option><option value="otel">Otel / Catering</option></select>
       <input name="address" placeholder="Adres" aria-label="Adres">
       <button class="btn sec" id="bizLoc" type="button">Konumumu kullan</button>
       <p class="muted" id="bizLocNote">Mekânda isen "Konumumu kullan"a bas. Aksi hâlde seçili konum (${esc($('#locName').textContent)}) kullanılır.</p>

@@ -19,7 +19,7 @@
     'Bağış': 'Donation', '%8–10': '8–10%', 'Paket': 'Bag', 'Başlangıç': 'Start', 'Ayrıntılar': 'Details', 'Şifre': 'Password',
     'İş': 'Work', 'Ev': 'Home', 'Ara': 'Search', 'SSS': 'FAQ', 'Kafe': 'Café',  'Bitiş': 'End', 'Bugün': 'Today',
     'Diğer': 'Other', 'Ekmek': 'Bread', 'Fırın': 'Bakery', 'Gözat': 'Browse', 'Hepsi': 'All', 'Kapat': 'Close', 'Konum': 'Location',
-    'Liste': 'List', 'Manav': 'Greengrocer', 'Tamam': 'Done', 'Yasal': 'Legal', 'Yemek': 'Meals', 'kaldı': 'left',
+    'Liste': 'List', 'Manav': 'Greengrocer', 'Şarküteri': 'Deli', 'Otel': 'Hotel', 'Şarküteri / Kasap': 'Deli / Butcher', 'Otel / Catering': 'Hotel / Catering', 'Tamam': 'Done', 'Yasal': 'Legal', 'Yemek': 'Meals', 'kaldı': 'left',
     'Çıkış': 'Log out', '3 adım': '3 steps', 'Başvur': 'Apply', 'Geçmiş': 'Past', 'Aktif': 'Active', 'Gönder': 'Send', 'Harita': 'Map',
     'Kaldır': 'Remove', 'Kaydet': 'Save', 'Keşfet': 'Discover', 'Market': 'Market', 'Onayla': 'Confirm', 'Profil': 'Profile',
     'Toplam': 'Total', 'Vazgeç': 'Cancel', 'Yardım': 'Help', 'yıldız': 'stars', 'Ambalaj': 'Packaging', 'E-posta': 'Email',
@@ -209,7 +209,7 @@
     [/(\d+) yorum/g, '$1 reviews'],
     [/^Teslim: /g, 'Pickup: ']
   ];
-  var TYPE = { 'Restoran': 'Restaurant', 'Kafe': 'Café', 'Fırın': 'Bakery', 'Manav': 'Greengrocer', 'Market': 'Market' };
+  var TYPE = { 'Restoran': 'Restaurant', 'Kafe': 'Café', 'Fırın': 'Bakery', 'Manav': 'Greengrocer', 'Market': 'Market', 'Şarküteri': 'Deli', 'Otel': 'Hotel' };
 
   function money(m, th, dec) { return '₺' + th.replace(/\./g, ',') + '.' + dec; }
   var keys = Object.keys(PHR).sort(function (a, b) { return b.length - a.length; });
@@ -224,7 +224,7 @@
     o = o.replace(/(\d{1,3}(?:\.\d{3})*),(\d{2}) ₺/g, money);
     o = o.replace(/(\d+) ₺/g, '₺$1');
     PATTERNS.forEach(function (p) { o = o.replace(p[0], p[1]); });
-    o = o.replace(/^(Restoran|Kafe|Fırın|Manav|Market)(?= · )/, function (m) { return TYPE[m]; });
+    o = o.replace(/^(Restoran|Kafe|Fırın|Manav|Market|Şarküteri|Otel)(?= · )/, function (m) { return TYPE[m]; });
     o = o.replace(BIG, function (m, pre, ph) { return pre + PHR[ph]; });
     return o;
   }
