@@ -1,4 +1,4 @@
-// Kırıntı uygulaması: Supabase'e bağlı. Ödeme henüz simüle (iyzico/PayTR sonra).
+// Kırıntı uygulaması: Supabase'e bağlı. Ödeme: iyzico güvenli ödeme sayfası (kart bilgisi Kırıntı'ya ulaşmaz).
 const SUPABASE_URL = 'https://dkcwjgonziqizaouypsd.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_U8w5lw--srZQ9auJAeLTIQ_oxR065hS'; // herkese açık anahtar; güvenlik RLS kurallarında
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -145,13 +145,13 @@ function loadBags() {
 }
 async function loadMyOrders() {
   if (!user) { myOrders = []; return renderOrders(); }
-  const [{ data }, { data: rv }, { data: dn }] = await Promise.all([
+  const [{ data }, { data: rv }] = await Promise.all([
     sb.from('orders').select('*, bags(title, pickup_date, pickup_from, pickup_to, price, original_price, businesses(id, name, address, lat, lng))').eq('customer_id', user.id).order('created_at', { ascending: false }),
     sb.from('reviews').select('order_id, rating').eq('customer_id', user.id),
-    sb.from('donations').select('amount, status').eq('customer_id', user.id),
   ]);
-  myDonated = (dn || []).filter(d => d.status !== 'iade').reduce((a, d) => a + Number(d.amount), 0);
-  myOrders = data || []; myReviews = Object.fromEntries((rv || []).map(r => [r.order_id, r.rating])); renderOrders();
+  myDonated = 0;
+  myOrders = (data || []).filter(o => o.status !== 'odeme_bekliyor' && !(o.status === 'iptal' && o.payment_status === 'basarisiz'));
+  myReviews = Object.fromEntries((rv || []).map(r => [r.order_id, r.rating])); renderOrders();
 }
 async function loadMyBiz() {
   if (!user) { myBiz = null; return renderBiz(); }
@@ -536,46 +536,24 @@ function openBag(id) {
 }
 
 // Kaydırarak onayla
-// ---------- Ödeme yöntemi ve bağış ----------
+// ---------- Ödeme ----------
 const PAY = {
-  kart: { name: 'Kredi / banka kartı', sub: 'Visa, Mastercard, Troy · test modu', icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6 15h4"/></svg>' },
-  paypal: { name: 'PayPal', sub: 'PayPal hesabınla öde · test modu', icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 21l1.6-11H14c3 0 4.5 1.6 4 4.2-.5 2.7-2.6 4-5.4 4H10.5L9.8 21z"/><path d="M8.5 6.5C9 4.8 10.4 4 12.5 4 15.3 4 16.6 5.4 16.2 7.6"/></svg>' },
-  applepay: { name: 'Apple Pay', sub: 'Yakında', soon: true, icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7c1-1.4 2.6-1.4 3.5-1-.1 1.8-1.3 3-3.5 1zM12 8.5c-2.4-1.2-5 .6-5 3.7 0 3 2 6.3 4 6.3 1 0 1.3-.5 2-.5s1 .5 2 .5c1.6 0 3.2-2.4 3.7-4.3-2.4-1-2.6-4.4-.2-5.6-1.3-1.4-3.4-1.2-4.5-.1z"/></svg>' },
-  googlepay: { name: 'Google Pay', sub: 'Yakında', soon: true, icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12.2c0-.6 0-1.1-.1-1.6H12v3h4.5c-.2 1-.8 1.9-1.7 2.5v2h2.7c1.6-1.5 2.5-3.600 2.5-5.9zM12 20.5c2.200 0 4.100-.8 5.500-2l-2.700-2c-.7.5-1.700.8-2.800.8-2.100 0-3.900-1.400-4.500-3.400H4.700v2.100C6.100 18.800 8.800 20.500 12 20.500zM7.500 13.900a4.800 4.800 0 0 1 0-3.100V8.700H4.700a8.500 8.500 0 0 0 0 7.400zM12 6.900c1.200 0 2.200.4 3.100 1.200l2.300-2.300A8.100 8.100 0 0 0 4.700 8.700l2.800 2.100C8.100 8.300 9.900 6.900 12 6.900z"/></svg>' },
+  kart: { name: 'Kredi / banka kartı', sub: 'Visa, Mastercard, Troy · iyzico ile güvenli ödeme', icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6 15h4"/></svg>' },
 };
-const DONATIONS = [0, 5, 10, 20];
-let payMethod = 'kart';
-try { const m = localStorage.getItem('kirinti_pay'); if (PAY[m] && !PAY[m].soon) payMethod = m; } catch {}
 
 function confirmSheet(p, q) {
   if (!user) { pending = { p, q }; return authSheet('Paket ayırmak için giriş yapmalısın.'); }
-  let don = 0;
   const sub = p.price * q;
   sheet(`<h3>Siparişi onayla</h3>
     <p><b>${q}× ${esc(p.title)}</b><br><span class="muted">${esc(p.businesses.name)} · Bugün ${hm(p.pickup_from)} - ${hm(p.pickup_to)}</span></p>
-    <div class="pay-h">Ödeme yöntemi</div>
-    <div class="pay-list" id="payList" role="radiogroup" aria-label="Ödeme yöntemi">${Object.entries(PAY).map(([k, m]) => `
-      <button type="button" class="pay-opt ${k === payMethod ? 'on' : ''}" data-pay="${k}" role="radio" aria-checked="${k === payMethod}" ${m.soon ? 'disabled' : ''}>
-        <span class="pay-ic">${m.icon}</span><span class="pay-t"><b>${m.name}</b><small>${m.sub}</small></span><i class="radio ${k === payMethod ? 'on' : ''}"></i></button>`).join('')}</div>
-    <div class="pay-h">Bağış ekle <span class="muted">(isteğe bağlı)</span></div>
-    <p class="muted don-note">Filistin'deki insanlara destek ol. Bağışlar, yardım ulaştıran yetkili bir kuruluş üzerinden aktarılacaktır. Test modunda gerçek tahsilat yapılmaz.</p>
-    <div class="fchips" id="donList" role="radiogroup" aria-label="Bağış tutarı">${DONATIONS.map(d => `<button type="button" class="fchip ${d === 0 ? 'on' : ''}" data-don="${d}" role="radio" aria-checked="${d === 0}">${d ? '+' + d + ' ₺' : 'Bağış yok'}</button>`).join('')}</div>
-    <div class="sum"><div><span>Paket</span><span>${money(sub)} ₺</span></div><div id="sumDon" hidden><span>Filistin bağışı</span><span id="sumDonV"></span></div><div class="tot"><span>Toplam</span><b id="sumTot">${money(sub)} ₺</b></div></div>
-    <p class="muted">Ödeme şimdilik simüle edilir; gerçek tahsilat yapılmaz. Gerçek kart bilgisi girmene gerek yok.</p>
-    <div class="swipe" id="sw" role="button" aria-label="Kaydırarak onayla"><div class="thumb" id="th">${ICON.go}</div><span>Kaydırarak onayla</span></div>
+    <div class="pay-h">Ödeme</div>
+    <div class="pay-list"><div class="pay-opt on"><span class="pay-ic">${PAY.kart.icon}</span><span class="pay-t"><b>${PAY.kart.name}</b><small>${PAY.kart.sub}</small></span></div></div>
+    <div class="sum"><div><span>Paket</span><span>${money(sub)} ₺</span></div><div class="tot"><span>Toplam</span><b>${money(sub)} ₺</b></div></div>
+    <p class="muted">Kart bilgilerini iyzico'nun güvenli ödeme sayfasında girersin. Kırıntı kart bilgini görmez ve saklamaz. Ödeme sayfasına geçtikten sonra paketin 10 dakika senin için ayrılır.</p>
+    <div class="swipe" id="sw" role="button" aria-label="Kaydırarak onayla"><div class="thumb" id="th">${ICON.go}</div><span>Kaydırarak öde</span></div>
     <button class="btn sec" id="x" type="button">Vazgeç</button>`);
   $('#x').onclick = closeSheet;
-  $('#payList').onclick = e => {
-    const b = e.target.closest('[data-pay]'); if (!b || b.disabled) return;
-    payMethod = b.dataset.pay; try { localStorage.setItem('kirinti_pay', payMethod); } catch {}
-    document.querySelectorAll('#payList .pay-opt').forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-checked', on); x.querySelector('.radio').classList.toggle('on', on); });
-  };
-  $('#donList').onclick = e => {
-    const b = e.target.closest('[data-don]'); if (!b) return; don = +b.dataset.don;
-    document.querySelectorAll('#donList .fchip').forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-checked', on); });
-    $('#sumDon').hidden = !don; $('#sumDonV').textContent = money(don) + ' ₺'; $('#sumTot').textContent = money(sub + don) + ' ₺';
-  };
-  const go = () => reserve(p, q, payMethod, don);
+  const go = () => startPayment(p, q);
   const sw = $('#sw'), th = $('#th');
   let drag = false, x0 = 0, done = false;
   sw.tabIndex = 0;
@@ -590,17 +568,28 @@ function confirmSheet(p, q) {
   };
 }
 
-async function reserve(p, q, method = 'kart', don = 0) {
-  const { data: o, error } = await sb.rpc('reserve_bag', { p_bag_id: p.id, p_qty: q, p_method: method });
-  if (error) { toast(/stock|stok|yeterli/i.test(error.message) ? 'Üzgünüz, paket az önce tükendi' : error.message); closeSheet(); return loadBags(); }
-  if (don > 0) {
-    const { error: de } = await sb.rpc('add_donation', { p_order_id: o.id, p_amount: don });
-    if (de) toast('Bağış eklenemedi, siparişin tamamlandı'); else o.donation_amount = don;
+// Gerçek ödeme: paket 10 dk ayrılır, kullanıcı iyzico'nun güvenli ödeme sayfasına yönlendirilir
+async function startPayment(p, q) {
+  const fail = msg => { toast(msg); closeSheet(); loadBags(); };
+  const { data: o, error } = await sb.rpc('start_payment', { p_bag_id: p.id, p_qty: q, p_method: 'kart' });
+  if (error) return fail(/stock|stok|yeterli/i.test(error.message) ? 'Üzgünüz, paket az önce tükendi' : error.message);
+  const { data, error: fe } = await sb.functions.invoke('pay-init', { body: { order_id: o.id } });
+  if (fe || !data || !data.url) {
+    await sb.rpc('abort_payment', { p_order_id: o.id });
+    return fail(data && data.error === 'not_configured' ? 'Ödeme sistemi henüz açık değil' : 'Ödeme başlatılamadı, tekrar dene');
   }
-  o.payment_method = method;
-  closeSheet();
-  await Promise.all([loadBags(), loadMyOrders()]);
-  showCode(o, p);
+  location.href = data.url;
+}
+
+// iyzico'dan döndükten sonra: ?pay=ok&order=... → teslim kodu ekranı; ?pay=fail → bilgi
+async function handlePayReturn() {
+  const q = new URLSearchParams(location.search), st = q.get('pay'); if (!st) return;
+  history.replaceState(null, '', location.pathname);
+  for (let i = 0; i < 50 && !user; i++) await new Promise(r => setTimeout(r, 100));
+  if (st !== 'ok') { toast('Ödeme tamamlanamadı; paketin serbest bırakıldı'); return loadBags(); }
+  await Promise.all([loadMyOrders(), loadBags()]);
+  const o = myOrders.find(x => x.id === q.get('order'));
+  if (o) showCode(o, o.bags); else toast('Ödemen alındı; siparişini Siparişler sekmesinde görebilirsin');
 }
 
 // Teslim kodu ekranı
@@ -612,8 +601,7 @@ function showCode(o, p) {
     <div class="ready"><h2>Paketin hazır</h2><p>${esc(b.name)} · Bugün ${hm(p.pickup_from)} - ${hm(p.pickup_to)}</p></div>
     <div class="codecard"><div class="k">Teslim kodu</div><div class="codebox">${esc(o.code)}</div><hr>
       <div class="ln"><span>${o.qty}× ${esc(p.title)}</span><b>${money(o.total)} ₺</b></div>
-      ${o.donation_amount > 0 ? `<div class="ln" style="margin-top:6px"><span>Filistin bağışı</span><b>${money(o.donation_amount)} ₺</b></div>` : ''}
-      <div class="ln" style="margin-top:6px;color:var(--mut);font-size:13px"><span>Ödeme: ${(PAY[o.payment_method] || PAY.kart).name} (test)</span></div>
+      <div class="ln" style="margin-top:6px;color:var(--mut);font-size:13px"><span>Ödeme: ${PAY.kart.name}${o.payment_status === 'simule' ? ' (test)' : ''}</span></div>
       <div class="ln" style="margin-top:6px;color:var(--mut);font-size:13px"><span>${esc(b.address) || ''}</span></div></div>
     <a class="route" href="${routeUrl(b)}" target="_blank" rel="noopener">${ICON.nav}Yol tarifi al</a>
     <p class="note">Yemeğini teslim alırken bu kodu mekâna göster.</p>
@@ -639,9 +627,9 @@ function confetti(root) {
 const FAQ = [
   ['Sürpriz paket nedir?', 'Kapanıştan önce satılamayan ama hâlâ taptaze ürünlerin, içeriği sürpriz olarak, normal fiyatın çok altında satıldığı pakettir. İçerik gün sonuna göre değişir; alerjen bilgisi paket sayfasındadır.'],
   ['Paketimi nasıl alırım?', 'Paketi rezerve et, belirtilen saat aralığında mekâna git ve 4 haneli teslim kodunu göster. Kodu Siparişler sekmesinde her zaman bulabilirsin.'],
-  ['Siparişimi iptal edebilir miyim?', 'Evet. Teslim saati başlamadan önce Siparişler sekmesinden iptal edebilirsin; paket stoğa geri döner. Ödeme açıldığında tutar iade edilir.'],
+  ['Siparişimi iptal edebilir miyim?', 'Evet. Teslim saati başlamadan önce Siparişler sekmesinden iptal edebilirsin; paket stoğa geri döner. Ödemen aynı karta iade edilir.'],
   ['Paketi zamanında alamazsam?', 'Teslim saati geçen sipariş “teslim alınmadı” olarak kapanır. Rezerve etmeden önce saat aralığını kontrol et.'],
-  ['Ödeme nasıl çalışıyor?', 'Ödeme adımı şu an test aşamasındadır; gerçek kart tahsilatı yapılmaz. Gerçek ödeme açıldığında duyuracağız.'],
+  ['Ödeme nasıl çalışıyor?', 'Ödemeyi kartınla, iyzico\'nun güvenli ödeme sayfasında yaparsın. Kart bilgilerin Kırıntı\'ya ulaşmaz ve saklanmaz.'],
   ['İşletmemi nasıl eklerim?', 'Profil sekmesindeki İşletme paneli bölümünden mekânını kaydet, paketlerini ekle veya tekrarlayan paket kur.'],
 ];
 function showHelp() {
@@ -696,7 +684,7 @@ function orderCard(o) {
   else foot = `<span class="muted">Kodu mekâna göstermek için dokun</span><div class="codebox">${esc(o.code)}</div>`
     + (canCancel(o) ? `<div><button class="btn small sec" data-cancel="${o.id}" type="button">Siparişi iptal et</button></div>` : '');
   return `<div class="order" ${live ? `data-oid="${o.id}" style="cursor:pointer"` : ''}><b>${esc(p.businesses.name)}</b>
-    <span class="muted">${o.qty}× ${esc(p.title)} · ${money(o.total)} ₺</span><span class="muted">${when}</span>${o.donation_amount > 0 && o.status !== 'iptal' ? `<span class="muted">Filistin bağışı: ${money(o.donation_amount)} ₺</span>` : ''}${foot}</div>`;
+    <span class="muted">${o.qty}× ${esc(p.title)} · ${money(o.total)} ₺</span><span class="muted">${when}</span>${foot}</div>`;
 }
 function renderOrders() {
   $('#orders').innerHTML = !user ? '<button class="btn small" data-in type="button">Giriş yap</button><p class="empty">Siparişlerini görmek için giriş yap.</p>'
@@ -709,8 +697,11 @@ function renderOrders() {
 }
 async function cancelOrder(id) {
   if (!confirm((window.T || String)('Siparişi iptal etmek istiyor musun? Ödemen iade edilir.'))) return;
-  const { error } = await sb.rpc('cancel_order', { p_order_id: id });
-  if (error) return toast(error.message);
+  const { data, error } = await sb.functions.invoke('pay-cancel', { body: { order_id: id } });
+  if (error || !data || data.error) {
+    const e = data && data.error;
+    return toast(e === 'not_configured' ? 'İade sistemi henüz hazır değil' : e === 'refund_failed' ? 'İade yapılamadı; lütfen bizimle iletişime geç' : (e || 'İptal edilemedi'));
+  }
   toast('Sipariş iptal edildi'); await Promise.all([loadMyOrders(), loadBags()]);
 }
 function rateSheet(id) {
@@ -773,23 +764,18 @@ async function renderBiz() {
     return;
   }
   await sb.rpc('publish_my_templates');   // bugünün tekrarlayan paketlerini yayınla
-  const [{ data: mine }, { data: ords }, { data: tpls }, { data: st }, { data: dns }] = await Promise.all([
+  const [{ data: mine }, { data: ords }, { data: tpls }, { data: st }] = await Promise.all([
     sb.from('bags').select('*').eq('business_id', myBiz.id).eq('pickup_date', todayTR()),
-    sb.from('orders').select('*, bags!inner(title, business_id, pickup_date)').eq('bags.business_id', myBiz.id).order('created_at', { ascending: false }).limit(40),
+    sb.from('orders').select('*, bags!inner(title, business_id, pickup_date)').eq('bags.business_id', myBiz.id).neq('status', 'odeme_bekliyor').order('created_at', { ascending: false }).limit(40),
     sb.from('bag_templates').select('*').eq('business_id', myBiz.id).order('created_at'),
     sb.rpc('business_stats', { p_business: myBiz.id }),
-    sb.from('donations').select('amount, source, status').eq('business_id', myBiz.id),
   ]);
   const t = st || {};
   const tile = (v, l) => `<div><b>${v}</b><small>${l}</small></div>`;
   const live = (ords || []).filter(o => o.status === 'bekliyor'), past = (ords || []).filter(o => o.status !== 'bekliyor');
   root.innerHTML = `<p><b>${esc(myBiz.name)}</b> <span class="muted">· ${esc(myBiz.address)}</span></p>
     <div class="stats">${tile(t.today_orders ?? 0, 'bugün sipariş')}${tile(t.today_delivered ?? 0, 'bugün teslim')}${tile(money(t.today_revenue ?? 0) + ' ₺', 'bugünkü kazanç')}${tile(t.total_meals ?? 0, 'kurtarılan öğün')}${tile(t.avg_rating ? '★ ' + String(t.avg_rating).replace('.', ',') : '–', (t.reviews ?? 0) + ' yorum')}${tile(t.no_shows ?? 0, 'gelmeyen')}</div>
-    <p class="muted" style="margin-top:8px">Kazanç, %30 komisyon düşüldükten sonraki tutardır (ödeme henüz simüle).</p>
-    <div class="form" id="donBox"><h3>Bağış</h3>
-      <p class="muted">Kazancının bir kısmını Filistin'deki insanlara bağışla. Seçtiğin oran, her teslim edilen siparişin kazancından otomatik ayrılır ve yetkili bir yardım kuruluşu üzerinden aktarılır (test modunda gerçek aktarım yapılmaz).</p>
-      <div class="fchips" id="pledge" role="radiogroup" aria-label="Bağış oranı">${[0, 5, 10, 25, 50, 100].map(v => `<button type="button" class="fchip ${(myBiz.donation_pct || 0) === v ? 'on' : ''}" data-pct="${v}" role="radio" aria-checked="${(myBiz.donation_pct || 0) === v}">${v ? '%' + v : 'Yok'}</button>`).join('')}</div>
-      <p class="muted" id="pledgeNote">${(dns || []).filter(d => d.status === 'onaylandi').reduce((a, d) => a + Number(d.amount), 0) > 0 ? `Şimdiye kadar bağışlanan: <b>${money((dns || []).filter(d => d.status === 'onaylandi').reduce((a, d) => a + Number(d.amount), 0))} ₺</b> (müşteri ve işletme bağışları, test)` : 'Henüz bağış yok.'}</p></div>
+    <p class="muted" style="margin-top:8px">Kazanç, %30 komisyon düşüldükten sonraki tutardır.</p>
     <form id="bagForm" class="form"><h3>Yeni sürpriz paket</h3>
       <input name="title" required placeholder="Paket adı (örn. Akşam Yemeği Paketi)" aria-label="Paket adı">
       <input name="desc" placeholder="Kısa açıklama / alerjen bilgisi" aria-label="Açıklama">
@@ -809,14 +795,6 @@ async function renderBiz() {
     ${live.map(o => `<div class="order"><b>${o.qty}× ${esc(o.bags.title)}</b>
       <div class="row2"><input data-code="${o.id}" placeholder="Müşteri kodu" inputmode="numeric" maxlength="4" aria-label="Müşteri kodu" style="min-height:44px;border:2px solid var(--line);border-radius:12px;padding:0 12px;width:100%"><button class="btn small" data-ok="${o.id}" type="button">Onayla</button></div></div>`).join('') || '<p class="muted">Bekleyen sipariş yok.</p>'}
     ${past.length ? `<h3 class="sub">Geçmiş siparişler</h3>${past.slice(0, 15).map(o => `<div class="order"><b>${o.qty}× ${esc(o.bags.title)}</b><span class="badge ${o.status === 'teslim' ? '' : 'off'}">${{ teslim: 'Teslim edildi', iptal: 'İptal edildi', gelmedi: 'Gelmedi' }[o.status]}</span></div>`).join('')}` : ''}`;
-  $('#pledge').onclick = async e => {
-    const b = e.target.closest('[data-pct]'); if (!b) return;
-    const pct = +b.dataset.pct, { error } = await sb.from('businesses').update({ donation_pct: pct }).eq('id', myBiz.id);
-    if (error) return toast(error.message);
-    myBiz.donation_pct = pct;
-    document.querySelectorAll('#pledge .fchip').forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-checked', on); });
-    toast(pct ? `Kazancının %${pct}'i bağışlanacak` : 'Otomatik bağış kapatıldı');
-  };
   $('#bagForm').onsubmit = async e => {
     e.preventDefault();
     const f = Object.fromEntries(new FormData(e.target)), btn = e.submitter; btn.disabled = true;
@@ -931,3 +909,4 @@ try { if (!localStorage.getItem('kirinti_onb')) setTimeout(showOnboarding, splas
 document.addEventListener('visibilitychange', () => { if (!document.hidden) loadBags(); });
 setInterval(() => { if (!document.hidden) loadBags(); }, 120000);
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+handlePayReturn();
