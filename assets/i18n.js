@@ -202,6 +202,8 @@
     [/(\d+) paketi göster/g, 'Show $1 bags'],
     [/(\d+) sipariş · (\d+) favori/g, '$1 orders · $2 favourites'],
     [/Kadıköy, İstanbul/g, 'Kadıköy, Istanbul'],
+    [/Kazanç, %(\d+) komisyon düşüldükten sonraki tutardır\./g, 'Earnings are shown after the $1% commission.'],
+    [/İlk 3 ay indirimli oran: (\d\d\.\d\d\.\d{4})'e kadar %(\d+) \(sonra %(\d+)\)\./g, 'Launch rate: $2% until $1 (then $3%).'],
     [/%(\d+)'i bağışlanacak/g, '$1% will be donated'],
     [/Kazancının %(\d+)'i bağışlanacak/g, '$1% of your earnings will be donated'],
     [/(\d+) yorum/g, '$1 reviews'],

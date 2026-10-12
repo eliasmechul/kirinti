@@ -33,7 +33,10 @@
 ## Canlıya geçiş (gerçek para)
 - iyzico'ya **üye iş yeri** olarak başvur (şirket/şahıs şirketi belgeleri), onaydan sonra gerçek API anahtarlarını al.
 - Secrets'ta `IYZICO_API_KEY`, `IYZICO_SECRET_KEY` değerlerini gerçek anahtarlarla değiştir, `IYZICO_BASE_URL` = `https://api.iyzipay.com`.
-- **Restoranlara pay dağıtımı:** Şu an tahsil edilen tutarın tamamı Kırıntı'nın iyzico hesabına gider; %30 komisyon ve restoran payı siparişte hesaplanır
+- **Komisyon:** Standart %30; yeni işletmelere ilk 90 gün indirimli %20 (`business_terms` tablosu, işletme sahibi görür ama değiştiremez).
+  Oranı değiştirmek için Supabase SQL: `update public.business_terms set commission_rate = 0.25, promo_rate = 0.15, promo_until = '2027-03-01' where business_id = '<işletme id>';`
+  Sipariş anındaki oran sipariş satırında saklanır, sonradan değişen oran eski siparişleri etkilemez.
+- **Restoranlara pay dağıtımı:** Şu an tahsil edilen tutarın tamamı Kırıntı'nın iyzico hesabına gider; komisyon ve restoran payı siparişte hesaplanır
   (`commission_amount`, `payout_amount`) ama restoranlara aktarım otomatik değildir. Otomatik bölüşüm için iyzico **Pazaryeri** (alt üye işyeri) ürünü gerekir;
   bu karar ve başvuru ayrı bir adımdır (lisanslı kuruluş şartı nedeniyle parayı Kırıntı kendi hesabından dağıtmamalı, hukuki/mali müşavir görüşü alınmalı).
 - Fatura/KDV süreçleri için mali müşavire danış.

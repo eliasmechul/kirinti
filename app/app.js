@@ -783,18 +783,24 @@ async function renderBiz() {
     return;
   }
   await sb.rpc('publish_my_templates');   // bugünün tekrarlayan paketlerini yayınla
-  const [{ data: mine }, { data: ords }, { data: tpls }, { data: st }] = await Promise.all([
+  const [{ data: mine }, { data: ords }, { data: tpls }, { data: st }, { data: terms }] = await Promise.all([
     sb.from('bags').select('*').eq('business_id', myBiz.id).eq('pickup_date', todayTR()),
     sb.from('orders').select('*, bags!inner(title, business_id, pickup_date)').eq('bags.business_id', myBiz.id).neq('status', 'odeme_bekliyor').order('created_at', { ascending: false }).limit(40),
     sb.from('bag_templates').select('*').eq('business_id', myBiz.id).order('created_at'),
     sb.rpc('business_stats', { p_business: myBiz.id }),
+    sb.from('business_terms').select('commission_rate, promo_rate, promo_until').eq('business_id', myBiz.id).maybeSingle(),
   ]);
   const t = st || {};
+  const tm = terms || { commission_rate: 0.30, promo_rate: 0.20, promo_until: null };
+  const todayIso = todayTR(), promoOn = !!tm.promo_until && tm.promo_until >= todayIso;
+  const pctNow = Math.round((promoOn ? tm.promo_rate : tm.commission_rate) * 100), pctStd = Math.round(tm.commission_rate * 100);
+  const promoEnd = promoOn ? tm.promo_until.split('-').reverse().join('.') : '';
+  const commNote = `Kazanç, %${pctNow} komisyon düşüldükten sonraki tutardır.` + (promoOn ? ` İlk 3 ay indirimli oran: ${promoEnd}'e kadar %${pctNow} (sonra %${pctStd}).` : '');
   const tile = (v, l) => `<div><b>${v}</b><small>${l}</small></div>`;
   const live = (ords || []).filter(o => o.status === 'bekliyor'), past = (ords || []).filter(o => o.status !== 'bekliyor');
   root.innerHTML = `<p><b>${esc(myBiz.name)}</b> <span class="muted">· ${esc(myBiz.address)}</span></p>
     <div class="stats">${tile(t.today_orders ?? 0, 'bugün sipariş')}${tile(t.today_delivered ?? 0, 'bugün teslim')}${tile(money(t.today_revenue ?? 0) + ' ₺', 'bugünkü kazanç')}${tile(t.total_meals ?? 0, 'kurtarılan öğün')}${tile(t.avg_rating ? '★ ' + String(t.avg_rating).replace('.', ',') : '–', (t.reviews ?? 0) + ' yorum')}${tile(t.no_shows ?? 0, 'gelmeyen')}</div>
-    <p class="muted" style="margin-top:8px">Kazanç, %30 komisyon düşüldükten sonraki tutardır.</p>
+    <p class="muted" style="margin-top:8px">${commNote}</p>
     <form id="bagForm" class="form"><h3>Yeni sürpriz paket</h3>
       <input name="title" required placeholder="Paket adı (örn. Akşam Yemeği Paketi)" aria-label="Paket adı">
       <input name="desc" placeholder="Kısa açıklama / alerjen bilgisi" aria-label="Açıklama">
