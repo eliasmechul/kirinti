@@ -472,3 +472,7 @@ button,a,.card,summary{touch-action:manipulation}
 /* Hesabı sil */
 .linkbtn{display:block;margin:6px 0 0;background:none;border:0;color:#B3261E;font:500 13px inherit;text-decoration:underline;min-height:44px;cursor:pointer}
 .btn.danger{background:#B3261E;color:#fff}
+
+/* Kayıtlı kart */
+.savedcard{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 0;padding:10px 12px;border:1px solid var(--line);border-radius:12px;font-size:14px}
+.savedcard .linkbtn{margin:0;color:var(--mut)}

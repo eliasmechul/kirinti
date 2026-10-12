@@ -10,6 +10,12 @@
 5. İptal: `pay-cancel` önce iptal edilebilirliği kontrol eder, iyzico'dan iptal/iade yapar, sonra siparişi kapatır.
 6. Eski "doğrudan rezervasyon" (`reserve_bag`) ve bağış (`add_donation`) fonksiyonları kullanıcılara **kapatıldı**.
 
+## Kayıtlı kart (Too Good To Go gibi tek dokunuş)
+- İlk ödemede kullanıcı kartını **iyzico'nun sayfasında** kaydedebilir. İyzico bir anahtar (`cardUserKey`) verir; biz **yalnızca bu anahtarı ve kartın son 4 hanesini** saklarız (`payment_profiles`; istemci tabloya doğrudan erişemez).
+- Sonraki ödemelerde `pay-init` bu anahtarı gönderir; iyzico sayfasında kayıtlı kart hazır gelir. Onay ekranında "Visa •••• 0008" görünür.
+- Profil → "Kayıtlı kartı sil" (`pay-card`) kartı iyzico'dan ve bizden siler; hesap silinirken de silinir.
+- **Uygulamanın içinde kart alanı göstermiyoruz:** bu, kart verisi güvenliği (PCI DSS) yükümlülüğü getirir. **Apple Pay / Google Pay / PayPal** gibi yöntemler iyzico hesabınızda açılıp açılmadığına bağlıdır; iyzico ile görüşülüp doğrulanmadan eklenmeyecek.
+
 ## Senin yapacakların (test için, ~5 dk)
 1. https://sandbox-merchant.iyzipay.com adresinde ücretsiz **sandbox hesabı** aç → Ayarlar → API anahtarları: **API Key** ve **Secret Key**.
 2. Supabase paneli → **Edge Functions → Secrets** bölümüne şunları ekle (anahtarları kimseyle paylaşma, koda yazma):

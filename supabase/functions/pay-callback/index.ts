@@ -2,7 +2,8 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { cfg, iyzi } from '../_shared/iyzico.ts';
 
 // iyzico ödeme sonrası buraya POST eder (token). Sonucu iyzico'dan DOĞRULAYIP siparişi kesinleştiririz;
-// tarayıcıdan gelen hiçbir bilgiye güvenilmez. Sonra kullanıcı uygulamaya yönlendirilir. (verify_jwt: false)
+// tarayıcıdan gelen hiçbir bilgiye güvenilmez. Kullanıcı kartını kaydettiyse yalnızca iyzico'nun verdiği anahtar ve son 4 hane saklanır.
+// Sonra kullanıcı uygulamaya yönlendirilir. (verify_jwt: false)
 Deno.serve(async (req) => {
   const site = Deno.env.get('SITE_URL') || 'https://kirinti-app.com';
   const back = (q: string) => new Response(null, { status: 303, headers: { Location: `${site}/app/?${q}` } });
@@ -15,7 +16,7 @@ Deno.serve(async (req) => {
       : new URL(req.url).searchParams.get('token') || '';
     if (!token) return back('pay=fail');
     const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    const { data: o } = await db.from('orders').select('id,total,status').eq('payment_token', token).maybeSingle();
+    const { data: o } = await db.from('orders').select('id,total,status,customer_id').eq('payment_token', token).maybeSingle();
     if (!o) return back('pay=fail');
 
     const res = await iyzi(c, '/payment/iyzipos/checkoutform/auth/ecom/detail', { locale: 'tr', conversationId: o.id, token });
@@ -25,7 +26,16 @@ Deno.serve(async (req) => {
       const { data: done } = await db.rpc('finalize_payment', {
         p_order_id: o.id, p_ref: String(res.paymentId), p_tx: tx ? String(tx) : null, p_paid: Number(res.paidPrice),
       });
-      if (done) return back(`pay=ok&order=${o.id}`);
+      if (done) {
+        if (res.cardUserKey) {
+          await db.from('payment_profiles').upsert({
+            user_id: o.customer_id, card_user_key: String(res.cardUserKey), card_token: res.cardToken ? String(res.cardToken) : null,
+            last4: res.lastFourDigits ? String(res.lastFourDigits) : null, brand: res.cardAssociation ? String(res.cardAssociation) : null,
+            updated_at: new Date().toISOString(),
+          });
+        }
+        return back(`pay=ok&order=${o.id}`);
+      }
       // Para çekildi ama sipariş kesinleştirilemedi (tutar uyuşmazlığı vb.): parayı geri ver
       await iyzi(c, '/payment/cancel', { locale: 'tr', conversationId: o.id, paymentId: String(res.paymentId), ip: '85.34.78.112' });
     }

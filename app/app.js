@@ -44,6 +44,7 @@ const ICON = {
 };
 
 const DEFAULT_LOC = [40.9908, 29.0290];
+let savedCard = null;
 let user = null, bags = [], myOrders = [], myBiz = null, pending = null, ratings = {}, myReviews = {}, myDonated = 0;
 let cat = 'hepsi', query = '', me = DEFAULT_LOC, locMode = 'preset', selId = null;
 let favs = [], SECTIONS = {};
@@ -143,8 +144,14 @@ function loadBags() {
     loaded = true; bags = data; render();
   })().finally(() => { loadingBags = null; });
 }
+async function loadSavedCard() {
+  if (!user) { savedCard = null; return; }
+  const { data } = await sb.rpc('my_saved_card');
+  savedCard = data && data[0] ? data[0] : null; renderAuthBars();
+}
 async function loadMyOrders() {
-  if (!user) { myOrders = []; return renderOrders(); }
+  if (!user) { myOrders = []; savedCard = null; return renderOrders(); }
+  loadSavedCard();
   const [{ data }, { data: rv }] = await Promise.all([
     sb.from('orders').select('*, bags(title, pickup_date, pickup_from, pickup_to, price, original_price, businesses(id, name, address, lat, lng))').eq('customer_id', user.id).order('created_at', { ascending: false }),
     sb.from('reviews').select('order_id, rating').eq('customer_id', user.id),
@@ -425,15 +432,27 @@ function delAccount() {
     <button class="btn danger" id="delOk" type="button">${T('Evet, hesabımı sil')}</button><button class="btn sec" id="x" type="button">${T('Vazgeç')}</button>`);
   $('#x').onclick = closeSheet;
   $('#delOk').onclick = async () => {
+    if (savedCard) { try { await sb.functions.invoke('pay-card', { body: {} }); } catch {} }
     const { error } = await sb.rpc('delete_my_account');
     if (error) return toast(T('Hesap silinemedi: ') + error.message);
     closeSheet(); await sb.auth.signOut(); toast(T('Hesabın silindi'));
   };
 }
+function savedCardHtml() {
+  if (!savedCard) return '';
+  return `<div class="savedcard"><span>${esc((savedCard.brand || 'Kart').replace(/_/g, ' '))} •••• ${esc(savedCard.last4 || '')}</span><button class="linkbtn" data-delcard type="button">Kayıtlı kartı sil</button></div>`;
+}
+async function delCard() {
+  const T = window.T || String;
+  if (!confirm(T('Kayıtlı kartın iyzico\'dan silinsin mi? Sonraki ödemede kartını yeniden girmen gerekir.'))) return;
+  const { data, error } = await sb.functions.invoke('pay-card', { body: {} });
+  if (error || !data || data.error) return toast(T('Kart silinemedi, tekrar dene'));
+  savedCard = null; renderAuthBars(); toast(T('Kayıtlı kart silindi'));
+}
 function renderAuthBars() {
   document.querySelectorAll('.authbar').forEach(el => {
     el.innerHTML = user
-      ? `<div class="me"><span class="av">${esc((user.email || '?')[0].toUpperCase())}</span><div><b>${esc(user.email)}</b><small>${myOrders.length} sipariş · ${favs.length} favori</small></div><button class="btn small sec" data-out type="button">Çıkış</button></div><button class="linkbtn" data-delacc type="button">Hesabımı sil</button>${(() => { const m = impact(); return (m.meals || myDonated) ? `<div class="impact"><div><b>${m.meals}</b><small>öğün kurtardın</small></div><div><b>${money(m.saved)} ₺</b><small>tasarruf</small></div><div><b>${m.co2.toFixed(1).replace('.', ',')} kg</b><small>CO₂ azaldı*</small></div>${myDonated > 0 ? `<div class="wide"><b>${money(myDonated)} ₺</b><small>Filistin'e bağış (test)</small></div>` : ''}<p>*Kurtarılan öğün başına ortalama 2,5 kg CO₂e varsayımıyla.</p></div>` : ''; })()}`
+      ? `<div class="me"><span class="av">${esc((user.email || '?')[0].toUpperCase())}</span><div><b>${esc(user.email)}</b><small>${myOrders.length} sipariş · ${favs.length} favori</small></div><button class="btn small sec" data-out type="button">Çıkış</button></div>${savedCardHtml()}<button class="linkbtn" data-delacc type="button">Hesabımı sil</button>${(() => { const m = impact(); return (m.meals || myDonated) ? `<div class="impact"><div><b>${m.meals}</b><small>öğün kurtardın</small></div><div><b>${money(m.saved)} ₺</b><small>tasarruf</small></div><div><b>${m.co2.toFixed(1).replace('.', ',')} kg</b><small>CO₂ azaldı*</small></div>${myDonated > 0 ? `<div class="wide"><b>${money(myDonated)} ₺</b><small>Filistin'e bağış (test)</small></div>` : ''}<p>*Kurtarılan öğün başına ortalama 2,5 kg CO₂e varsayımıyla.</p></div>` : ''; })()}`
       : `<button class="btn small" data-in type="button">Giriş yap / Kayıt ol</button>`;
   });
 }
@@ -547,9 +566,9 @@ function confirmSheet(p, q) {
   sheet(`<h3>Siparişi onayla</h3>
     <p><b>${q}× ${esc(p.title)}</b><br><span class="muted">${esc(p.businesses.name)} · Bugün ${hm(p.pickup_from)} - ${hm(p.pickup_to)}</span></p>
     <div class="pay-h">Ödeme</div>
-    <div class="pay-list"><div class="pay-opt on"><span class="pay-ic">${PAY.kart.icon}</span><span class="pay-t"><b>${PAY.kart.name}</b><small>${PAY.kart.sub}</small></span></div></div>
+    <div class="pay-list"><div class="pay-opt on"><span class="pay-ic">${PAY.kart.icon}</span><span class="pay-t"><b>${savedCard ? esc((savedCard.brand || 'Kart').replace(/_/g, ' ')) + ' •••• ' + esc(savedCard.last4 || '') : PAY.kart.name}</b><small>${savedCard ? 'Kayıtlı kartınla öde · iyzico ile güvenli ödeme' : PAY.kart.sub}</small></span></div></div>
     <div class="sum"><div><span>Paket</span><span>${money(sub)} ₺</span></div><div class="tot"><span>Toplam</span><b>${money(sub)} ₺</b></div></div>
-    <p class="muted">Kart bilgilerini iyzico'nun güvenli ödeme sayfasında girersin. Kırıntı kart bilgini görmez ve saklamaz. Ödeme sayfasına geçtikten sonra paketin 10 dakika senin için ayrılır.</p>
+    <p class="muted">Kart bilgilerini iyzico'nun güvenli ödeme sayfasında girersin; istersen kartını orada kaydedip sonraki ödemelerde tek dokunuşla ödersin. Kırıntı kart numaranı görmez ve saklamaz. Ödeme sayfasına geçtikten sonra paketin 10 dakika senin için ayrılır.</p>
     <div class="swipe" id="sw" role="button" aria-label="Kaydırarak onayla"><div class="thumb" id="th">${ICON.go}</div><span>Kaydırarak öde</span></div>
     <button class="btn sec" id="x" type="button">Vazgeç</button>`);
   $('#x').onclick = closeSheet;
@@ -844,6 +863,7 @@ document.addEventListener('click', async e => {
   if (t.closest('[data-in]')) return authSheet();
   if (t.closest('[data-out]')) { e.preventDefault(); return sb.auth.signOut(); }
   if (t.closest('[data-delacc]')) { e.preventDefault(); return delAccount(); }
+  if (t.closest('[data-delcard]')) { e.preventDefault(); return delCard(); }
   if (t.closest('[data-retry]')) return loadBags();
   const ap = t.closest('[data-addplace]');
   if (ap) return getPosition(c => { places[ap.dataset.addplace] = c; savePlaces(); setLocation(c, PLACE_NAME[ap.dataset.addplace], ap.dataset.addplace); closeSheet(); toast('Konum kaydedildi'); });

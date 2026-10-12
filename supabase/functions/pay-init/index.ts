@@ -2,6 +2,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { cfg, cors, iyzi, json } from '../_shared/iyzico.ts';
 
 // Ödeme başlat: bekleyen siparişin tutarı sunucuda okunur (istemciye güvenilmez), iyzico ödeme sayfası adresi döner.
+// Kullanıcının kayıtlı kartı varsa cardUserKey gönderilir; iyzico sayfasında kayıtlı kart hazır gelir.
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   try {
@@ -24,13 +25,15 @@ Deno.serve(async (req) => {
     const email = user.email ?? 'musteri@kirinti-app.com';
     const name = (email.split('@')[0] || 'Musteri').slice(0, 30);
     const addr = { contactName: name, city: 'Istanbul', country: 'Turkey', address: 'Mekandan teslim (gel-al)' };
-    const body = {
+    const body: Record<string, unknown> = {
       locale: 'tr', conversationId: o.id, price, paidPrice: price, currency: 'TRY', basketId: o.id, paymentGroup: 'PRODUCT',
       callbackUrl: `${url}/functions/v1/pay-callback`, enabledInstallments: [1],
       buyer: { id: user.id, name, surname: 'Kirinti', identityNumber: '11111111111', email, registrationAddress: 'Mekandan teslim (gel-al)', ip, city: 'Istanbul', country: 'Turkey' },
       shippingAddress: addr, billingAddress: addr,
       basketItems: [{ id: o.id, name: `${o.qty}x ${(o as any).bags?.title ?? 'Paket'}`.slice(0, 60), category1: 'Yemek', itemType: 'PHYSICAL', price }],
     };
+    const { data: pp } = await db.from('payment_profiles').select('card_user_key').eq('user_id', user.id).maybeSingle();
+    if (pp?.card_user_key) body.cardUserKey = pp.card_user_key;
     const res = await iyzi(c, '/payment/iyzipos/checkoutform/initialize/auth/ecom', body);
     if (res.status !== 'success' || !res.paymentPageUrl) return json({ error: 'init_failed', detail: res.errorMessage ?? null });
     await db.from('orders').update({ payment_token: res.token }).eq('id', o.id);

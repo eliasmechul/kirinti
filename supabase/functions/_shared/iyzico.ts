@@ -19,13 +19,13 @@ async function hmacHex(secret: string, msg: string) {
 }
 
 // iyzico IYZWSv2 imzası: HMAC-SHA256(secret, randomKey + uriPath + body)
-export async function iyzi(c: { key: string; secret: string; base: string }, path: string, body: unknown) {
+export async function iyzi(c: { key: string; secret: string; base: string }, path: string, body: unknown, method = 'POST') {
   const payload = JSON.stringify(body);
   const rnd = `${Date.now()}${crypto.randomUUID().slice(0, 8)}`;
   const sig = await hmacHex(c.secret, rnd + path + payload);
   const auth = 'IYZWSv2 ' + btoa(`apiKey:${c.key}&randomKey:${rnd}&signature:${sig}`);
   const r = await fetch(c.base + path, {
-    method: 'POST',
+    method,
     headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: auth, 'x-iyzi-rnd': rnd },
     body: payload,
   });
