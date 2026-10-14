@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "app.kirintiapp.twa",
+    "sha256_cert_fingerprints": ["BURAYA_PLAY_CONSOLE_SHA256_IMZA_PARMAK_IZI"]
+  }
+}]
