@@ -71,7 +71,7 @@
     'Favorilere eklendi': 'Added to favourites', 'Favorilerden çıkarıldı': 'Removed from favourites',
     // ---- Giriş
     'Giriş yap / Kayıt ol': 'Log in / Sign up', 'Paket ayırmak için giriş yapmalısın.': 'Log in to reserve a bag.', 'Şifre (en az 6 karakter)': 'Password (at least 6 characters)',
-    'Şifremi unuttum': 'Forgot password', 'Giriş yapıldı': 'Logged in', 'E-posta veya şifre hatalı': 'Wrong email or password', 'E-postanı doğrula': 'Verify your email',
+    'Şifremi unuttum': 'Forgot password', 'Çok fazla deneme yapıldı, biraz sonra tekrar dene': 'Too many attempts, please try again shortly',  'Giriş yapıldı': 'Logged in', 'E-posta veya şifre hatalı': 'Wrong email or password', 'E-postanı doğrula': 'Verify your email',
     'Kayıt tamam. E-postanı doğrula.': 'You’re signed up. Verify your email.', 'Önce e-posta adresini yaz': 'Enter your email address first',
     'Şifre yenileme bağlantısı e-postana gönderildi': 'A password reset link was sent to your email', 'Gönderilemedi, tekrar dene': 'Couldn’t send, try again',
     // ---- Onay, ödeme, bağış

@@ -387,36 +387,41 @@ function showList(id) {
 }
 
 // ---------- Giriş ----------
-function authSheet(msg) {
-  sheet(`<h3>Giriş yap / Kayıt ol</h3>${msg ? `<p class="muted" style="text-align:center">${esc(msg)}</p>` : ''}
+function authSheet(msg, mode = 'in') {
+  const up = mode === 'up';
+  sheet(`<h3>${up ? 'Kayıt ol' : 'Giriş yap'}</h3>
+    <div class="seg" style="display:flex;margin:0 auto 12px;max-width:280px"><button type="button" id="tabIn" class="${up ? '' : 'on'}" style="flex:1">Giriş yap</button><button type="button" id="tabUp" class="${up ? 'on' : ''}" style="flex:1">Kayıt ol</button></div>
+    ${msg ? `<p class="muted" style="text-align:center">${esc(msg)}</p>` : ''}
     <form class="form" id="authForm" style="margin-top:0">
       <input name="email" type="email" required placeholder="E-posta" autocomplete="email" aria-label="E-posta">
-      <input name="password" type="password" required minlength="6" placeholder="Şifre (en az 6 karakter)" autocomplete="current-password" aria-label="Şifre">
-      <button class="btn" type="submit">Giriş yap</button>
-      <button class="btn sec" type="button" id="signup">Kayıt ol</button>
-      <button class="linkbtn" type="button" id="forgot">Şifremi unuttum</button></form>
+      <input name="password" type="password" required minlength="6" placeholder="Şifre (en az 6 karakter)" autocomplete="${up ? 'new-password' : 'current-password'}" aria-label="Şifre">
+      <button class="btn" type="submit">${up ? 'Kayıt ol' : 'Giriş yap'}</button>
+      ${up ? '' : '<button class="linkbtn" type="button" id="forgot">Şifremi unuttum</button>'}</form>
     <button class="btn sec" id="x" type="button">Kapat</button>`);
   $('#x').onclick = closeSheet;
+  $('#tabIn').onclick = () => authSheet(msg, 'in');
+  $('#tabUp').onclick = () => authSheet(msg, 'up');
   const creds = () => { const f = new FormData($('#authForm')); return { email: f.get('email'), password: f.get('password') }; };
   $('#authForm').onsubmit = async e => {
     e.preventDefault();
     const btn = e.submitter; btn.disabled = true;
+    if (up) {
+      const { data, error } = await sb.auth.signUp(creds());
+      btn.disabled = false;
+      if (error) return toast(/rate limit/i.test(error.message) ? 'Çok fazla deneme yapıldı, biraz sonra tekrar dene' : error.message);
+      return data.session ? afterAuth(data.user, 'Hoş geldin!') : toast('Kayıt tamam. E-postanı doğrula.');
+    }
     const { data, error } = await sb.auth.signInWithPassword(creds());
     btn.disabled = false;
     if (error) return toast(error.message.includes('confirm') ? 'E-postanı doğrula' : 'E-posta veya şifre hatalı');
     afterAuth(data.user, 'Giriş yapıldı');
   };
-  $('#forgot').onclick = async () => {
+  const fg = $('#forgot');
+  if (fg) fg.onclick = async () => {
     const email = new FormData($('#authForm')).get('email');
     if (!email) return toast('Önce e-posta adresini yaz');
     const { error } = await sb.auth.resetPasswordForEmail(email);
     toast(error ? 'Gönderilemedi, tekrar dene' : 'Şifre yenileme bağlantısı e-postana gönderildi');
-  };
-  $('#signup').onclick = async () => {
-    if (!$('#authForm').reportValidity()) return;
-    const { data, error } = await sb.auth.signUp(creds());
-    if (error) return toast(error.message);
-    if (!data.session) toast('Kayıt tamam. E-postanı doğrula.'); else afterAuth(data.user, 'Hoş geldin!');
   };
 }
 // Girişten sonra yarım kalan rezervasyona kaldığı yerden devam et
