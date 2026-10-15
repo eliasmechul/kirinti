@@ -157,7 +157,7 @@ async function loadMyOrders() {
     sb.from('reviews').select('order_id, rating').eq('customer_id', user.id),
   ]);
   myDonated = 0;
-  myOrders = (data || []).filter(o => o.status !== 'odeme_bekliyor' && !(o.status === 'iptal' && o.payment_status === 'basarisiz'));
+  myOrders = (data || []).filter(o => o.status !== 'odeme_bekliyor' && !(o.status === 'iptal' && o.payment_status === 'basarisiz' && o.payment_method !== 'mekanda'));
   myReviews = Object.fromEntries((rv || []).map(r => [r.order_id, r.rating])); renderOrders();
 }
 async function loadMyBiz() {
@@ -561,7 +561,10 @@ function openBag(id) {
 
 // Kaydırarak onayla
 // ---------- Ödeme ----------
+// Çevrim içi kart ödemesi (iyzico). false: paket ayrılır, ödeme teslimde mekânda yapılır.
+const PAY_ONLINE = false;
 const PAY = {
+  mekanda: { name: 'Mekânda öde', sub: 'Paketi teslim alırken mekânda ödersin', icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10l1.5-5h15L21 10M4 10v9h16v-9M9 19v-5h6v5"/></svg>' },
   kart: { name: 'Kredi / banka kartı', sub: 'Visa, Mastercard, Troy · iyzico ile güvenli ödeme', icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6 15h4"/></svg>' },
 };
 
@@ -571,10 +574,12 @@ function confirmSheet(p, q) {
   sheet(`<h3>Siparişi onayla</h3>
     <p><b>${q}× ${esc(p.title)}</b><br><span class="muted">${esc(p.businesses.name)} · Bugün ${hm(p.pickup_from)} - ${hm(p.pickup_to)}</span></p>
     <div class="pay-h">Ödeme</div>
-    <div class="pay-list"><div class="pay-opt on"><span class="pay-ic">${PAY.kart.icon}</span><span class="pay-t"><b>${savedCard ? esc((savedCard.brand || 'Kart').replace(/_/g, ' ')) + ' •••• ' + esc(savedCard.last4 || '') : PAY.kart.name}</b><small>${savedCard ? 'Kayıtlı kartınla öde · iyzico ile güvenli ödeme' : PAY.kart.sub}</small></span></div></div>
+    ${PAY_ONLINE ? '' : `<div class="pay-list"><div class="pay-opt on"><span class="pay-ic">${PAY.mekanda.icon}</span><span class="pay-t"><b>${PAY.mekanda.name}</b><small>${PAY.mekanda.sub}</small></span></div></div>`}
+    <div class="pay-list" ${PAY_ONLINE ? '' : 'hidden'}><div class="pay-opt on"><span class="pay-ic">${PAY.kart.icon}</span><span class="pay-t"><b>${savedCard ? esc((savedCard.brand || 'Kart').replace(/_/g, ' ')) + ' •••• ' + esc(savedCard.last4 || '') : PAY.kart.name}</b><small>${savedCard ? 'Kayıtlı kartınla öde · iyzico ile güvenli ödeme' : PAY.kart.sub}</small></span></div></div>
     <div class="sum"><div><span>Paket</span><span>${money(sub)} ₺</span></div><div class="tot"><span>Toplam</span><b>${money(sub)} ₺</b></div></div>
-    <p class="muted">Kart bilgilerini iyzico'nun güvenli ödeme sayfasında girersin; istersen kartını orada kaydedip sonraki ödemelerde tek dokunuşla ödersin. Kırıntı kart numaranı görmez ve saklamaz. Ödeme sayfasına geçtikten sonra paketin 10 dakika senin için ayrılır.</p>
-    <div class="swipe" id="sw" role="button" aria-label="Kaydırarak onayla"><div class="thumb" id="th">${ICON.go}</div><span>Kaydırarak öde</span></div>
+    ${PAY_ONLINE ? '' : '<p class="muted">Ödemeyi paketi teslim alırken mekânda yaparsın; şimdi hiçbir ödeme alınmaz. Teslim saati içinde kodunu göstermen yeterli. Gelemeyeceksen teslim saati başlamadan siparişi iptal et.</p>'}
+    <p class="muted" ${PAY_ONLINE ? '' : 'hidden'}>Kart bilgilerini iyzico'nun güvenli ödeme sayfasında girersin; istersen kartını orada kaydedip sonraki ödemelerde tek dokunuşla ödersin. Kırıntı kart numaranı görmez ve saklamaz. Ödeme sayfasına geçtikten sonra paketin 10 dakika senin için ayrılır.</p>
+    <div class="swipe" id="sw" role="button" aria-label="Kaydırarak onayla"><div class="thumb" id="th">${ICON.go}</div><span>${PAY_ONLINE ? 'Kaydırarak öde' : 'Kaydırarak ayır'}</span></div>
     <button class="btn sec" id="x" type="button">Vazgeç</button>`);
   $('#x').onclick = closeSheet;
   const go = () => startPayment(p, q);
@@ -595,6 +600,12 @@ function confirmSheet(p, q) {
 // Gerçek ödeme: paket 10 dk ayrılır, kullanıcı iyzico'nun güvenli ödeme sayfasına yönlendirilir
 async function startPayment(p, q) {
   const fail = msg => { toast(msg); closeSheet(); loadBags(); };
+  if (!PAY_ONLINE) {
+    const { data: r, error: re } = await sb.rpc('reserve_pickup', { p_bag_id: p.id, p_qty: q });
+    if (re) return fail(/yeterli/i.test(re.message) ? 'Üzgünüz, paket az önce tükendi' : re.message);
+    closeSheet(); await Promise.all([loadMyOrders(), loadBags()]);
+    return showCode(r, p);
+  }
   const { data: o, error } = await sb.rpc('start_payment', { p_bag_id: p.id, p_qty: q, p_method: 'kart' });
   if (error) return fail(/stock|stok|yeterli/i.test(error.message) ? 'Üzgünüz, paket az önce tükendi' : error.message);
   const { data, error: fe } = await sb.functions.invoke('pay-init', { body: { order_id: o.id } });
@@ -625,7 +636,7 @@ function showCode(o, p) {
     <div class="ready"><h2>Paketin hazır</h2><p>${esc(b.name)} · Bugün ${hm(p.pickup_from)} - ${hm(p.pickup_to)}</p></div>
     <div class="codecard"><div class="k">Teslim kodu</div><div class="codebox">${esc(o.code)}</div><hr>
       <div class="ln"><span>${o.qty}× ${esc(p.title)}</span><b>${money(o.total)} ₺</b></div>
-      <div class="ln" style="margin-top:6px;color:var(--mut);font-size:13px"><span>Ödeme: ${PAY.kart.name}${o.payment_status === 'simule' ? ' (test)' : ''}</span></div>
+      <div class="ln" style="margin-top:6px;color:var(--mut);font-size:13px"><span>Ödeme: ${o.payment_method === 'mekanda' ? 'Mekânda öde (teslimde)' : PAY.kart.name}${o.payment_status === 'simule' ? ' (test)' : ''}</span></div>
       <div class="ln" style="margin-top:6px;color:var(--mut);font-size:13px"><span>${esc(b.address) || ''}</span></div></div>
     <a class="route" href="${routeUrl(b)}" target="_blank" rel="noopener">${ICON.nav}Yol tarifi al</a>
     <p class="note">Yemeğini teslim alırken bu kodu mekâna göster.</p>
@@ -651,9 +662,9 @@ function confetti(root) {
 const FAQ = [
   ['Sürpriz paket nedir?', 'Kapanıştan önce satılamayan ama hâlâ taptaze ürünlerin, içeriği sürpriz olarak, normal fiyatın çok altında satıldığı pakettir. İçerik gün sonuna göre değişir; alerjen bilgisi paket sayfasındadır.'],
   ['Paketimi nasıl alırım?', 'Paketi rezerve et, belirtilen saat aralığında mekâna git ve 4 haneli teslim kodunu göster. Kodu Siparişler sekmesinde her zaman bulabilirsin.'],
-  ['Siparişimi iptal edebilir miyim?', 'Evet. Teslim saati başlamadan önce Siparişler sekmesinden iptal edebilirsin; paket stoğa geri döner. Ödemen aynı karta iade edilir.'],
+  ['Siparişimi iptal edebilir miyim?', 'Evet. Teslim saati başlamadan önce Siparişler sekmesinden iptal edebilirsin; paket stoğa geri döner.' + (PAY_ONLINE ? ' Ödemen aynı karta iade edilir.' : ' Ödemeyi teslimde yaptığın için ücret alınmaz.')],
   ['Paketi zamanında alamazsam?', 'Teslim saati geçen sipariş “teslim alınmadı” olarak kapanır. Rezerve etmeden önce saat aralığını kontrol et.'],
-  ['Ödeme nasıl çalışıyor?', 'Ödemeyi kartınla, iyzico\'nun güvenli ödeme sayfasında yaparsın. Kart bilgilerin Kırıntı\'ya ulaşmaz ve saklanmaz.'],
+  ['Ödeme nasıl çalışıyor?', PAY_ONLINE ? 'Ödemeyi kartınla, iyzico\'nun güvenli ödeme sayfasında yaparsın. Kart bilgilerin Kırıntı\'ya ulaşmaz ve saklanmaz.' : 'Şimdilik paketi uygulamadan ayırırsın, ödemeyi teslim alırken mekânda yaparsın. Kartla çevrim içi ödeme çok yakında.'],
   ['İşletmemi nasıl eklerim?', 'Profil sekmesindeki İşletme paneli bölümünden mekânını kaydet, paketlerini ekle veya tekrarlayan paket kur.'],
 ];
 function showHelp() {
@@ -720,6 +731,13 @@ function renderOrders() {
   renderAuthBars();
 }
 async function cancelOrder(id) {
+  const ord = myOrders.find(x => x.id === id);
+  if (ord && ord.payment_method === 'mekanda') {
+    if (!confirm((window.T || String)('Siparişi iptal etmek istiyor musun?'))) return;
+    const { error: ce } = await sb.rpc('cancel_order', { p_order_id: id });
+    if (ce) return toast(ce.message || 'İptal edilemedi');
+    toast('Sipariş iptal edildi'); return Promise.all([loadMyOrders(), loadBags()]);
+  }
   if (!confirm((window.T || String)('Siparişi iptal etmek istiyor musun? Ödemen iade edilir.'))) return;
   const { data, error } = await sb.functions.invoke('pay-cancel', { body: { order_id: id } });
   if (error || !data || data.error) {

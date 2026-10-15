@@ -476,3 +476,5 @@ button,a,.card,summary{touch-action:manipulation}
 /* Kayıtlı kart */
 .savedcard{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 0;padding:10px 12px;border:1px solid var(--line);border-radius:12px;font-size:14px}
 .savedcard .linkbtn{margin:0;color:var(--mut)}
+
+[hidden]{display:none!important}
