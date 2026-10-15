@@ -17,3 +17,6 @@ Tüm fotoğraflar [Unsplash](https://unsplash.com) üzerinden, [Unsplash Lisans�
 | baker.jpg | @andylid0 | https://unsplash.com/photos/RndRFJ1v1kk |
 | phone.jpg | Kelly Sikkema (@kellysikkema) | https://unsplash.com/photos/roJv_dmHKVA |
 | bread.jpg | @andylid0 (baker.jpg'den kırpıldı) | https://unsplash.com/photos/RndRFJ1v1kk |
+| vegetables.jpg | Noah Buisson | https://unsplash.com/photos/fresh-vegetables-displayed-in-wooden-crates-at-market-XPltBlxfChk |
+| fruit.jpg | Jonas Kakaroto | https://unsplash.com/photos/fresh-fruit-basket-with-assorted-produce-5JQH9Iqnm9o |
+| ready.jpg | Ella Olsson | https://unsplash.com/photos/meal-prep-containers-with-healthy-food-lMcRyBx4G50 |
