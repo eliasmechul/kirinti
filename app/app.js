@@ -562,7 +562,14 @@ function openBag(id) {
 // Kaydırarak onayla
 // ---------- Ödeme ----------
 // Çevrim içi kart ödemesi (iyzico). false: paket ayrılır, ödeme teslimde mekânda yapılır.
-const PAY_ONLINE = false;
+// Test için: adrese ?kart=1 eklenirse bu cihazda kart ödemesi açılır, ?kart=0 ile kapanır.
+const PAY_ONLINE = (() => {
+  try {
+    const q = new URLSearchParams(location.search).get('kart');
+    if (q === '1') localStorage.setItem('kirinti_kart', '1'); else if (q === '0') localStorage.removeItem('kirinti_kart');
+    return localStorage.getItem('kirinti_kart') === '1';
+  } catch { return false; }
+})();
 const PAY = {
   mekanda: { name: 'Mekânda öde', sub: 'Paketi teslim alırken mekânda ödersin', icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10l1.5-5h15L21 10M4 10v9h16v-9M9 19v-5h6v5"/></svg>' },
   kart: { name: 'Kredi / banka kartı', sub: 'Visa, Mastercard, Troy · iyzico ile güvenli ödeme', icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6 15h4"/></svg>' },

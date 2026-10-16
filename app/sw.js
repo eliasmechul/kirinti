@@ -1,6 +1,6 @@
 // Kırıntı servis çalışanı: uygulama kabuğunu önbelleğe alır, bir sonraki açılışta yenisini getirir.
 // Veritabanı (Supabase) ve harita karoları önbelleğe alınmaz; sipariş ve stok her zaman canlı kalır.
-const CACHE = 'kirinti-v21';
+const CACHE = 'kirinti-v22';
 const SHELL = ['index.html', 'app.css', 'app.js', 'manifest.webmanifest', 'icons/icon-192.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {
