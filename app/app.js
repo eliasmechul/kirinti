@@ -562,14 +562,9 @@ function openBag(id) {
 // Kaydırarak onayla
 // ---------- Ödeme ----------
 // Çevrim içi kart ödemesi (iyzico). false: paket ayrılır, ödeme teslimde mekânda yapılır.
-// Test için: adrese ?kart=1 eklenirse bu cihazda kart ödemesi açılır, ?kart=0 ile kapanır.
-const PAY_ONLINE = (() => {
-  try {
-    const q = new URLSearchParams(location.search).get('kart');
-    if (q === '1') localStorage.setItem('kirinti_kart', '1'); else if (q === '0') localStorage.removeItem('kirinti_kart');
-    return localStorage.getItem('kirinti_kart') === '1';
-  } catch { return false; }
-})();
+const PAY_ONLINE = true;
+// iyzico sandbox anahtarları kullanılıyorken true: ödeme ekranında test aşaması uyarısı gösterilir. Canlı anahtarlara geçince false yap.
+const PAY_TEST_MODE = true;
 const PAY = {
   mekanda: { name: 'Mekânda öde', sub: 'Paketi teslim alırken mekânda ödersin', icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10l1.5-5h15L21 10M4 10v9h16v-9M9 19v-5h6v5"/></svg>' },
   kart: { name: 'Kredi / banka kartı', sub: 'Visa, Mastercard, Troy · iyzico ile güvenli ödeme', icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6 15h4"/></svg>' },
@@ -585,6 +580,7 @@ function confirmSheet(p, q) {
     <div class="pay-list" ${PAY_ONLINE ? '' : 'hidden'}><div class="pay-opt on"><span class="pay-ic">${PAY.kart.icon}</span><span class="pay-t"><b>${savedCard ? esc((savedCard.brand || 'Kart').replace(/_/g, ' ')) + ' •••• ' + esc(savedCard.last4 || '') : PAY.kart.name}</b><small>${savedCard ? 'Kayıtlı kartınla öde · iyzico ile güvenli ödeme' : PAY.kart.sub}</small></span></div></div>
     <div class="sum"><div><span>Paket</span><span>${money(sub)} ₺</span></div><div class="tot"><span>Toplam</span><b>${money(sub)} ₺</b></div></div>
     ${PAY_ONLINE ? '' : '<p class="muted">Ödemeyi paketi teslim alırken mekânda yaparsın; şimdi hiçbir ödeme alınmaz. Teslim saati içinde kodunu göstermen yeterli. Gelemeyeceksen teslim saati başlamadan siparişi iptal et.</p>'}
+    ${PAY_TEST_MODE ? '<p class="muted" style="color:#B3261E"><b>Test aşaması:</b> Şu an yalnızca iyzico test kartları kabul edilir; gerçek kartından para çekilmez ve gerçek kartın reddedilir.</p>' : ''}
     <p class="muted" ${PAY_ONLINE ? '' : 'hidden'}>Kart bilgilerini iyzico'nun güvenli ödeme sayfasında girersin; istersen kartını orada kaydedip sonraki ödemelerde tek dokunuşla ödersin. Kırıntı kart numaranı görmez ve saklamaz. Ödeme sayfasına geçtikten sonra paketin 10 dakika senin için ayrılır.</p>
     <div class="swipe" id="sw" role="button" aria-label="Kaydırarak onayla"><div class="thumb" id="th">${ICON.go}</div><span>${PAY_ONLINE ? 'Kaydırarak öde' : 'Kaydırarak ayır'}</span></div>
     <button class="btn sec" id="x" type="button">Vazgeç</button>`);
