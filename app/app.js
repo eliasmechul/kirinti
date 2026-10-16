@@ -562,7 +562,14 @@ function openBag(id) {
 // Kaydırarak onayla
 // ---------- Ödeme ----------
 // Çevrim içi kart ödemesi (iyzico). false: paket ayrılır, ödeme teslimde mekânda yapılır.
-const PAY_ONLINE = true;
+// Çevrim içi kart ödemesi canlı satıcı hesabı gelene kadar kapalı. Test için adrese ?kart=1 eklenirse bu cihazda açılır, ?kart=0 ile kapanır.
+const PAY_ONLINE = (() => {
+  try {
+    const q = new URLSearchParams(location.search).get('kart');
+    if (q === '1') localStorage.setItem('kirinti_kart', '1'); else if (q === '0') localStorage.removeItem('kirinti_kart');
+    return localStorage.getItem('kirinti_kart') === '1';
+  } catch { return false; }
+})();
 // iyzico sandbox anahtarları kullanılıyorken true: ödeme ekranında test aşaması uyarısı gösterilir. Canlı anahtarlara geçince false yap.
 const PAY_TEST_MODE = true;
 const PAY = {
