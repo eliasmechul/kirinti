@@ -110,3 +110,11 @@ Kontrol edildiğinde müsaitti (ilk yıl ~16 USD); satın alınmadı. Yapılacak
 - Dil: `assets/i18n.js` (TR/EN çalışma zamanı çevirisi, `localStorage.kirinti_lang`). Yeni metinler için EXACT/PHR sözlüğüne ekle.
 - Açılış animasyonu (`#splash`), kategori şeridi, `assets/visuals/friends.svg`.
 - Eski 2 argümanlı `reserve_bag` hâlâ veritabanında; DROP tekrar denenmeli.
+
+## Yayın durumu (Ekim 2026)
+- Yayın klasörü: `docs/` (= `dist/` kopyası + `CNAME` kirinti-app.com + `.nojekyll`). Güncellemek için: `sh build.sh && rm -rf docs && cp -r dist docs && touch docs/.nojekyll && printf 'kirinti-app.com\n' > docs/CNAME`.
+- GitHub Pages: Settings → Pages → Branch `claude/vibrant-turing-mz2jcl`, klasör `/docs`.
+- DNS: 4 adet A (185.199.108-111.153) + www CNAME → eliasmechul.github.io. Sonra Enforce HTTPS.
+- Supabase → Auth → URL Configuration → Site URL: https://kirinti-app.com
+- Netlify hesabı kredi limitini aştı (yeni deploy engelli); Netlify gerekmiyor.
+- Bekleyen: sebze/meyve/hazır yemek gerçek fotoğrafları (assets/photos/vegetables.jpg, fruit.jpg, ready.jpg), gerçek ödeme (iyzico/PayPal), bağış için yetkili kuruluş.
