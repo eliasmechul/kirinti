@@ -34,3 +34,6 @@ end $$;
 
 revoke execute on function public.reserve_bag(uuid, integer, text) from public, anon;
 grant execute on function public.reserve_bag(uuid, integer, text) to authenticated;
+
+-- Canlıda DROP zaman aşımına uğradı; eski 2 argümanlı reserve_bag(uuid, integer) için yetkiler kaldırıldı:
+-- revoke all on function public.reserve_bag(uuid, integer) from public, anon, authenticated;
