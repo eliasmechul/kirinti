@@ -44,6 +44,8 @@ const ICON = {
 };
 
 const DEFAULT_LOC = [40.9908, 29.0290];
+// Türkiye'nin 81 ili (il merkezi koordinatları): konum olarak seçilebilir
+const CITIES = [['Adana',37.0000,35.3213],['Adıyaman',37.7648,38.2786],['Afyonkarahisar',38.7507,30.5567],['Ağrı',39.7191,43.0503],['Aksaray',38.3687,34.0370],['Amasya',40.6499,35.8353],['Ankara',39.9334,32.8597],['Antalya',36.8969,30.7133],['Ardahan',41.1105,42.7022],['Artvin',41.1828,41.8183],['Aydın',37.8560,27.8416],['Balıkesir',39.6484,27.8826],['Bartın',41.6344,32.3375],['Batman',37.8812,41.1351],['Bayburt',40.2552,40.2249],['Bilecik',40.1451,29.9799],['Bingöl',38.8854,40.4980],['Bitlis',38.4006,42.1095],['Bolu',40.7392,31.6089],['Burdur',37.7203,30.2908],['Bursa',40.1826,29.0665],['Çanakkale',40.1553,26.4142],['Çankırı',40.6013,33.6134],['Çorum',40.5506,34.9556],['Denizli',37.7765,29.0864],['Diyarbakır',37.9144,40.2306],['Düzce',40.8438,31.1565],['Edirne',41.6818,26.5623],['Elazığ',38.6810,39.2264],['Erzincan',39.7500,39.5000],['Erzurum',39.9055,41.2658],['Eskişehir',39.7767,30.5206],['Gaziantep',37.0662,37.3833],['Giresun',40.9128,38.3895],['Gümüşhane',40.4603,39.4814],['Hakkari',37.5744,43.7408],['Hatay',36.4018,36.3498],['Iğdır',39.9237,44.0450],['Isparta',37.7648,30.5566],['İstanbul',41.0082,28.9784],['İzmir',38.4237,27.1428],['Kahramanmaraş',37.5858,36.9371],['Karabük',41.2061,32.6204],['Karaman',37.1759,33.2287],['Kars',40.6013,43.0975],['Kastamonu',41.3887,33.7827],['Kayseri',38.7312,35.4787],['Kırıkkale',39.8468,33.5153],['Kırklareli',41.7333,27.2167],['Kırşehir',39.1425,34.1709],['Kilis',36.7184,37.1212],['Kocaeli',40.8533,29.8815],['Konya',37.8746,32.4932],['Kütahya',39.4167,29.9833],['Malatya',38.3552,38.3095],['Manisa',38.6191,27.4289],['Mardin',37.3212,40.7245],['Mersin',36.8000,34.6333],['Muğla',37.2153,28.3636],['Muş',38.7432,41.5064],['Nevşehir',38.6939,34.6857],['Niğde',37.9667,34.6833],['Ordu',40.9839,37.8764],['Osmaniye',37.0742,36.2478],['Rize',41.0201,40.5234],['Sakarya',40.7569,30.3783],['Samsun',41.2867,36.3300],['Siirt',37.9333,41.9500],['Sinop',42.0231,35.1531],['Sivas',39.7477,37.0179],['Şanlıurfa',37.1591,38.7969],['Şırnak',37.5164,42.4611],['Tekirdağ',40.9833,27.5167],['Tokat',40.3167,36.5500],['Trabzon',41.0027,39.7168],['Tunceli',39.1079,39.5401],['Uşak',38.6823,29.4082],['Van',38.4891,43.4089],['Yalova',40.6500,29.2667],['Yozgat',39.8181,34.8147],['Zonguldak',41.4564,31.7987]];
 let savedCard = null;
 let user = null, bags = [], myOrders = [], myBiz = null, pending = null, ratings = {}, myReviews = {}, myDonated = 0;
 let cat = 'hepsi', query = '', me = DEFAULT_LOC, locMode = 'preset', selId = null;
@@ -95,6 +97,7 @@ async function ensureMap() {
 }
 function setLocation(coords, label, mode) {
   me = coords; locMode = mode; bags.forEach(p => delete p._d);
+  try { localStorage.setItem('kirinti_loc', JSON.stringify({ c: coords, label, mode })); } catch {}
   if (map) { map.setView(me, 14); meMarker.setLatLng(me); }
   $('#locName').textContent = label; render();
 }
@@ -120,9 +123,23 @@ function locSheet() {
   sheet(`<h3>Konum</h3>
     ${row(ICON.other, 'Seçili konum', 'Kadıköy, İstanbul', `<span class="radio ${locMode === 'preset' ? 'on' : ''}"></span>`, 'data-loc="preset"')}
     ${row(ICON.locate, 'Şu anki konum', '', `<span class="radio ${locMode === 'current' ? 'on' : ''}"></span>`, 'data-loc="current"')}
+    ${row(ICON.other, 'Şehir seç', locMode === 'city' ? $('#locName').textContent : 'Türkiye\u2019nin her ilinden', '<span class="add">Seç</span>', 'data-citypick="1"')}
     ${place('home')}${place('work')}${place('other')}
     <button class="btn sec" id="x" type="button" style="margin-top:8px">Kapat</button>`);
   $('#x').onclick = closeSheet;
+}
+// Şehir seçici: 81 il, yazarak ara (Türkçe harflere duyarsız)
+const trKey = t => t.toLocaleLowerCase('tr').replace(/ı/g, 'i').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+function citySheet() {
+  const list = q => CITIES.map((c, i) => [c, i]).filter(([c]) => !q || trKey(c[0]).includes(trKey(q)))
+    .map(([c, i]) => `<button class="locrow" type="button" data-city="${i}"><span class="t">${c[0]}</span><span class="radio ${locMode === 'city' && $('#locName').textContent === c[0] ? 'on' : ''}"></span></button>`).join('')
+    || '<p class="muted">Şehir bulunamadı</p>';
+  sheet(`<h3>Şehir seç</h3>
+    <label class="map-search" style="box-shadow:none;border:1px solid var(--line)"><span class="sr">Şehir ara</span><input id="cityQ" type="search" placeholder="Şehir ara" autocomplete="off"></label>
+    <div id="cityList" style="max-height:48vh;overflow-y:auto">${list('')}</div>
+    <button class="btn sec" id="x" type="button" style="margin-top:8px">Kapat</button>`);
+  $('#x').onclick = closeSheet;
+  $('#cityQ').oninput = e => { $('#cityList').innerHTML = list(e.target.value); };
 }
 
 // ---------- Veri ----------
@@ -288,7 +305,9 @@ function renderBrowse() {
   });
   if (fitNext && groups.length) {
     fitNext = false;
-    map.fitBounds(L.latLngBounds(groups.map(g => [g.b.lat, g.b.lng]).concat([me])), { padding: [70, 70], maxZoom: 15 });
+    const near = groups.filter(g => km(me, [g.b.lat, g.b.lng]) <= 30);
+    if (near.length) map.fitBounds(L.latLngBounds(near.map(g => [g.b.lat, g.b.lng]).concat([me])), { padding: [70, 70], maxZoom: 15 });
+    else map.setView(me, 12);
   }
   renderPick(groups);
 }
@@ -517,7 +536,7 @@ function openBag(id) {
       <div class="p-sec"><h4>Bu sürpriz paket hakkında</h4><p>${info}</p>
         <span class="chip-c"><img src="${photo(p)}" alt="">${catName}</span></div>
       <div class="p-sec"><h4>Yol tarifi</h4>
-        <div style="display:flex;gap:10px;align-items:center;font-size:15px">${ICON.pin}<span>${esc(b.address) || 'Kadıköy, İstanbul'}</span></div>
+        <div style="display:flex;gap:10px;align-items:center;font-size:15px">${ICON.pin}<span>${esc(b.address) || 'Türkiye'}</span></div>
         <div id="dmap"></div>
         <a class="btn line" style="margin-top:12px" href="${routeUrl(b)}" target="_blank" rel="noopener">Rotayı göster</a></div>
       <div class="p-sec" id="revs" hidden><h4>Yorumlar</h4><div id="revList"></div></div>
@@ -912,6 +931,9 @@ document.addEventListener('click', async e => {
   if (t.closest('[data-retry]')) return loadBags();
   const ap = t.closest('[data-addplace]');
   if (ap) return getPosition(c => { places[ap.dataset.addplace] = c; savePlaces(); setLocation(c, PLACE_NAME[ap.dataset.addplace], ap.dataset.addplace); closeSheet(); toast('Konum kaydedildi'); });
+  if (t.closest('[data-citypick]')) return citySheet();
+  const ct = t.closest('[data-city]');
+  if (ct) { const c = CITIES[+ct.dataset.city]; setLocation([c[1], c[2]], c[0], 'city'); fitNext = true; closeSheet(); return; }
   const loc = t.closest('[data-loc]');
   if (loc) {
     const k = loc.dataset.loc;
@@ -961,6 +983,14 @@ $('#tab-profil').addEventListener('click', async e => {
 });
 
 document.querySelectorAll('.langseg [data-lang]').forEach(b => { const on = b.dataset.lang === (window.KIRINTI_LANG || 'tr'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+// Son seçilen konumu geri yükle; konum izni zaten verilmişse sessizce güncelle
+try {
+  const sv = JSON.parse(localStorage.getItem('kirinti_loc') || 'null');
+  if (sv && Array.isArray(sv.c) && sv.c.length === 2) { me = sv.c; locMode = sv.mode || 'preset'; $('#locName').textContent = sv.label || 'Kadıköy'; }
+} catch {}
+if (navigator.permissions && navigator.geolocation) navigator.permissions.query({ name: 'geolocation' }).then(r => {
+  if (r.state === 'granted') navigator.geolocation.getCurrentPosition(p => setLocation([p.coords.latitude, p.coords.longitude], 'Şu anki konum', 'current'), () => {}, { timeout: 8000, maximumAge: 300000 });
+}).catch(() => {});
 renderAuthBars();
 loadBags();
 // Açılış animasyonu: oturumda bir kez gösterilir

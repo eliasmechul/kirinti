@@ -55,7 +55,7 @@
     'Paketler yüklenemedi. İnternet bağlantını kontrol et.': 'Couldn’t load bags. Check your internet connection.',
     'Paketler güncellenemedi': 'Couldn’t refresh bags', 'Aramana uygun paket bulunamadı.': 'No bags match your search.',
     'Bu aramaya uygun paket yok.': 'No bags match this search.', 'Filtreleri ve aramayı temizle': 'Clear filters and search',
-    'Konumun alınıyor…': 'Getting your location…', 'Konum izni verilmedi': 'Location permission denied', 'Konumuma git': 'My location', 'Bu cihazda konum desteklenmiyor': 'Location isn’t supported on this device',
+    'Konumun alınıyor…': 'Getting your location…', 'Konum izni verilmedi': 'Location permission denied', 'Konumuma git': 'My location', 'Şehir seç': 'Choose city', 'Şehir ara': 'Search city', 'Şehir bulunamadı': 'No city found', 'Türkiye’nin her ilinden': 'Any of Türkiye’s 81 provinces', 'Seç': 'Select', 'Bu cihazda konum desteklenmiyor': 'Location isn’t supported on this device',
     'Şu anki konumunu kaydet': 'Save your current location', 'Konum kaydedildi': 'Location saved', 'Harita yüklenemedi': 'Couldn’t load the map', 
     'Mekân, yemek veya tür ara': 'Search venue, food or type', 'Restoran, kafe veya yemek ara': 'Search restaurant, café or food',
     // ---- Filtre paneli
