@@ -226,13 +226,21 @@ function rail(id, title, list) {
   return `<div class="sec-h"><h3>${title}</h3><button type="button" data-all="${id}">Tümünü gör</button></div><div class="rail">${list.map(card).join('')}</div>`;
 }
 
+// Yakında (30 km) hiç mekân yoksa: sahte mekân göstermek yerine öner / kaydol çağrısı
+const NEAR_KM = 30;
+const nothingNear = () => loaded && !bags.some(p => dist(p) <= NEAR_KM);
+const areaEmpty = () => `<div class="area-empty"><img class="empty-mark" src="../assets/logo/mark.svg" alt="" width="48" height="48">
+  <b>Bu bölgede henüz mekân yok</b>
+  <p>Yakında paket kurtaran bir yer biliyorsan haber ver. İşletme sahibiysen mekânını Kırıntı’ya ekle, ilk paketin yayında olsun.</p>
+  <div class="ae-btns"><a class="btn small" href="mailto:destek@kirinti-app.com?subject=${encodeURIComponent('Mekân önerisi')}&body=${encodeURIComponent('Şehir / mahalle: ' + $('#locName').textContent + '\nMekânın adı:\n')}">Mekân öner</a>
+  <button class="btn small sec" data-bizreg type="button">İşletme olarak kaydol</button></div></div>`;
 function render() {
   const list = visible();
   const open = list.filter(p => p.qty_available > 0 && !ended(p));
   const last = [...open].sort((a, b) => hm(a.pickup_to).localeCompare(hm(b.pickup_to)));
   const fresh = [...open].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
   SECTIONS = {};
-  $('#sections').innerHTML =
+  $('#sections').innerHTML = nothingNear() ? areaEmpty() :
     rail('fav', 'Çevrendeki favoriler', open)
     + rail('last', 'Kaçmadan kurtar', last)
     + rail('new', 'Yeni paketler', fresh)
@@ -313,6 +321,7 @@ function renderBrowse() {
 }
 function renderPick(groups) {
   const g = groups.find(x => x.b.id === selBiz);
+  if (!g && nothingNear()) { $('#pick').innerHTML = areaEmpty(); return; }
   $('#pick').innerHTML = g ? `<div class="pick-card"><div class="pk-head"><i>${initial(g.b)}</i>
       <div><b>${esc(g.b.name)}</b><small>${typeLabel(g.b)} · ${fmtDist(dist(g.bags[0]))}${stars(g.b.id) ? ` · <span class="star">${stars(g.b.id)}</span>` : ''}</small></div>
       <button class="circ" id="pkClose" type="button" aria-label="Kapat">${ICON.close}</button></div>
@@ -928,6 +937,7 @@ document.addEventListener('click', async e => {
   if (t.closest('[data-out]')) { e.preventDefault(); return sb.auth.signOut(); }
   if (t.closest('[data-delacc]')) { e.preventDefault(); return delAccount(); }
   if (t.closest('[data-delcard]')) { e.preventDefault(); return delCard(); }
+  if (t.closest('[data-bizreg]')) return setTab('profil');
   if (t.closest('[data-retry]')) return loadBags();
   const ap = t.closest('[data-addplace]');
   if (ap) return getPosition(c => { places[ap.dataset.addplace] = c; savePlaces(); setLocation(c, PLACE_NAME[ap.dataset.addplace], ap.dataset.addplace); closeSheet(); toast('Konum kaydedildi'); });
@@ -989,7 +999,7 @@ try {
   if (sv && Array.isArray(sv.c) && sv.c.length === 2) { me = sv.c; locMode = sv.mode || 'preset'; $('#locName').textContent = sv.label || 'Kadıköy'; }
 } catch {}
 if (navigator.permissions && navigator.geolocation) navigator.permissions.query({ name: 'geolocation' }).then(r => {
-  if (r.state === 'granted') navigator.geolocation.getCurrentPosition(p => setLocation([p.coords.latitude, p.coords.longitude], 'Şu anki konum', 'current'), () => {}, { timeout: 8000, maximumAge: 300000 });
+  if (r.state === 'granted') navigator.geolocation.getCurrentPosition(p => { const { latitude: la, longitude: lo } = p.coords; if (la > 35.7 && la < 42.3 && lo > 25.6 && lo < 44.9) setLocation([la, lo], 'Şu anki konum', 'current'); }, () => {}, { timeout: 8000, maximumAge: 300000 });
 }).catch(() => {});
 renderAuthBars();
 loadBags();
