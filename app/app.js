@@ -957,7 +957,13 @@ $('#tab-profil').addEventListener('click', async e => {
 document.querySelectorAll('.langseg [data-lang]').forEach(b => { const on = b.dataset.lang === (window.KIRINTI_LANG || 'tr'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
 renderAuthBars();
 loadBags();
-try { if (!localStorage.getItem('kirinti_onb')) setTimeout(showOnboarding, 400); } catch {}
+// Açılış animasyonu: oturumda bir kez gösterilir
+let splashShown = false;
+try { splashShown = !sessionStorage.getItem('kirinti_splash'); sessionStorage.setItem('kirinti_splash', '1'); } catch {}
+const sp = $('#splash');
+if (sp && !splashShown) sp.remove();
+else if (sp) { setTimeout(() => sp.classList.add('out'), matchMedia('(prefers-reduced-motion:reduce)').matches ? 900 : 2700); setTimeout(() => sp.remove(), matchMedia('(prefers-reduced-motion:reduce)').matches ? 1300 : 3400); }
+try { if (!localStorage.getItem('kirinti_onb')) setTimeout(showOnboarding, splashShown ? 3500 : 400); } catch {}
 // Uygulama arka plandan dönünce ve her 2 dakikada bir paketleri yenile (stok, süre ve gün değişimi için)
 document.addEventListener('visibilitychange', () => { if (!document.hidden) loadBags(); });
 setInterval(() => { if (!document.hidden) loadBags(); }, 120000);
