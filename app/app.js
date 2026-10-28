@@ -887,6 +887,12 @@ function setTab(name) {
 }
 document.querySelectorAll('.tabbar button').forEach(btn => btn.onclick = () => setTab(btn.dataset.t));
 $('#locBtn').onclick = locSheet;
+// Haritada "Konumuma git": konumu al, işaretçiyi ve haritayı oraya taşı
+$('#locMe').onclick = () => {
+  const b = $('#locMe'); b.classList.add('busy');
+  getPosition(c => { b.classList.remove('busy'); fitNext = false; setLocation(c, 'Şu anki konum', 'current'); });
+  setTimeout(() => b.classList.remove('busy'), 9000);
+};
 // İki arama kutusu (Keşfet ve Gözat) birbirine bağlı; yazarken liste her tuşta değil, kısa bir beklemeden sonra yenilenir
 let qTimer;
 $('#q').oninput = e => { bq = e.target.value; clearTimeout(qTimer); qTimer = setTimeout(renderBrowse, 160); };
