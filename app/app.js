@@ -233,7 +233,8 @@ const areaEmpty = () => `<div class="area-empty"><img class="empty-mark" src="..
   <b>Bu bölgede henüz mekân yok</b>
   <p>Yakında paket kurtaran bir yer biliyorsan haber ver. İşletme sahibiysen mekânını Kırıntı’ya ekle, ilk paketin yayında olsun.</p>
   <div class="ae-btns"><a class="btn small" href="mailto:destek@kirinti-app.com?subject=${encodeURIComponent('Mekân önerisi')}&body=${encodeURIComponent('Şehir / mahalle: ' + $('#locName').textContent + '\nMekânın adı:\n')}">Mekân öner</a>
-  <button class="btn small sec" data-bizreg type="button">İşletme olarak kaydol</button></div></div>`;
+  <button class="btn small sec" data-bizreg type="button">İşletme olarak kaydol</button>
+  <button class="btn small sec" data-loc="preset" type="button">Kadıköy’deki örnek mekânlara bak</button></div></div>`;
 function render() {
   const list = visible();
   const open = list.filter(p => p.qty_available > 0 && !ended(p));
