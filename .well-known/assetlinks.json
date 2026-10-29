@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.kirinti_app.twa",
+      "sha256_cert_fingerprints": ["36:E6:D2:1F:49:C8:66:6C:7F:4A:05:4C:46:9B:60:61:F4:D7:4E:0E:BE:48:4B:40:84:00:08:C1:9D:42:B8:42"]
+    }
+  }
+]
