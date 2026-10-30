@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Kırıntı’yı test et</title>
+<meta name="description" content="Kırıntı test sürümüne 1 dakikada katıl: Android, Gmail, 3 adım.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700..800&family=DM+Sans:wght@400;500;700&display=swap"><style>
+:root{--display:'Bricolage Grotesque','DM Sans',system-ui,sans-serif;--ink:#2A2410;--cream:#FFFBEB;--tint:#FFF1C4;--amber:#8A5A00;--mut:#6B6140;--line:#2A24101f;--sun:#FFC93C}
+*{box-sizing:border-box}body{font:16px/1.6 'DM Sans',system-ui,sans-serif;max-width:560px;margin:0 auto;padding:28px 20px 60px;color:var(--ink);background:var(--cream);-webkit-font-smoothing:antialiased}
+h1,h2{font-family:var(--display);line-height:1.12;letter-spacing:-.03em;font-weight:800;text-wrap:balance}
+h1{font-size:clamp(30px,8vw,40px);margin:24px 0 8px}h2{font-size:20px;margin:0 0 6px}
+a{color:var(--amber)}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:-.03em;text-decoration:none;color:var(--ink)}.brand img{width:40px;height:40px}
+.lang{display:flex;gap:8px;margin:16px 0}.lang button{font:inherit;font-weight:700;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:6px 16px;cursor:pointer}
+.lang button[aria-pressed=true]{background:var(--ink);color:var(--cream)}
+.step{display:flex;gap:14px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px 16px;margin:12px 0}
+.step b.n{flex:none;width:34px;height:34px;border-radius:50%;background:var(--sun);display:grid;place-items:center;font-family:var(--display);font-weight:800}
+.step>div{flex:1;min-width:0}
+.btn{display:block;text-align:center;text-decoration:none;font-weight:800;font-family:var(--display);font-size:19px;background:var(--sun);color:var(--ink);border:0;border-radius:16px;padding:16px;margin:20px 0 10px;width:100%;cursor:pointer}
+.btn.alt{background:#fff;border:1px solid var(--line);font-size:16px;margin:8px 0}
+.note{background:var(--tint);padding:12px 16px;border-radius:14px;border:1px solid var(--line);font-size:15px}
+[data-l]{display:none}body[data-lang=tr] [data-l=tr],body[data-lang=de] [data-l=de],body[data-lang=en] [data-l=en]{display:block}
+span[data-l]{display:none}body[data-lang=tr] span[data-l=tr],body[data-lang=de] span[data-l=de],body[data-lang=en] span[data-l=en]{display:inline}
+</style></head><body data-lang="tr">
+<a class="brand" href="https://kirinti-app.com/"><img src="https://kirinti-app.com/assets/logo/mark.svg" alt="">Kırıntı</a>
+<div class="lang" role="group" aria-label="Dil / Sprache / Language">
+<button data-set="tr" aria-pressed="true">Türkçe</button><button data-set="de" aria-pressed="false">Deutsch</button><button data-set="en" aria-pressed="false">English</button></div>
+
+<h1 data-l="tr">Kırıntı’yı test et, 1 dakika</h1>
+<h1 data-l="de">Teste Kırıntı, 1 Minute</h1>
+<h1 data-l="en">Test Kırıntı, 1 minute</h1>
+<p data-l="tr">Sürpriz paketlerle gıda israfına karşı yeni uygulamamızı Android’de test edecek insanlar arıyoruz. Bu sayfayı <b>Android telefonundan</b>, <b>Gmail hesabınla</b> giriş yapmışken Chrome’da aç.</p>
+<p data-l="de">Wir suchen Leute, die unsere neue App gegen Lebensmittelverschwendung (Überraschungstüten) auf Android testen. Öffne diese Seite am <b>Android-Handy</b> in Chrome, angemeldet mit deinem <b>Gmail-Konto</b>.</p>
+<p data-l="en">We’re looking for people to test our new app against food waste (surprise bags) on Android. Open this page on your <b>Android phone</b> in Chrome, signed in with your <b>Gmail account</b>.</p>
+
+<div class="step"><b class="n">1</b><div>
+<h2 data-l="tr">Test bağlantısını aç</h2><h2 data-l="de">Test-Link öffnen</h2><h2 data-l="en">Open the test link</h2>
+<a class="btn" href="https://play.google.com/apps/testing/com.kirinti_app.twa" id="optin"><span data-l="tr">Teste katıl</span><span data-l="de">Zum Test</span><span data-l="en">Join the test</span></a>
+</div></div>
+<div class="step"><b class="n">2</b><div>
+<h2 data-l="tr">“Test kullanıcısı ol” düğmesine bas</h2><h2 data-l="de">Auf „Tester werden“ tippen</h2><h2 data-l="en">Tap “Become a tester”</h2>
+<p data-l="tr" style="margin:0">(İngilizce: <i>Become a tester</i>). Bu adımı atlarsan Google “test sürümü kullanılamıyor” der.</p>
+<p data-l="de" style="margin:0">(Englisch: <i>Become a tester</i>). Ohne diesen Schritt zeigt Google „Testversion nicht verfügbar“.</p>
+<p data-l="en" style="margin:0">Without this step Google says “test version not available”.</p>
+</div></div>
+<div class="step"><b class="n">3</b><div>
+<h2 data-l="tr">Google Play’den indir</h2><h2 data-l="de">Bei Google Play herunterladen</h2><h2 data-l="en">Download from Google Play</h2>
+<p data-l="tr" style="margin:0">Uygulamayı silme, arada bir aç. Test 14 gün sürüyor.</p>
+<p data-l="de" style="margin:0">Bitte nicht löschen und ab und zu öffnen. Der Test läuft 14 Tage.</p>
+<p data-l="en" style="margin:0">Please keep it installed and open it now and then. The test runs for 14 days.</p>
+</div></div>
+
+<p class="note" data-l="tr">Sadece Android. iPhone’da şimdilik çalışmıyor. Giriş yaptığın Gmail adresi bize ayrıca bildirilmiş olmalı; olmadıysa bize yaz: destek@kirinti-app.com</p>
+<p class="note" data-l="de">Nur Android. Auf dem iPhone geht es vorerst nicht. Deine Gmail-Adresse muss von uns eingeladen sein; falls nicht, schreib uns: destek@kirinti-app.com</p>
+<p class="note" data-l="en">Android only; not on iPhone for now. Your Gmail address must have been invited by us; if not, write to destek@kirinti-app.com</p>
+
+<button class="btn alt" id="share" type="button"><span data-l="tr">Arkadaşına gönder</span><span data-l="de">An Freunde schicken</span><span data-l="en">Share with friends</span></button>
+<script>
+(function(){
+var b=document.body,url='https://kirinti-app.com/test/';
+function set(l){b.setAttribute('data-lang',l);document.documentElement.lang=l;
+document.querySelectorAll('.lang button').forEach(function(x){x.setAttribute('aria-pressed',x.getAttribute('data-set')===l)});
+try{localStorage.setItem('kirinti_testlang',l)}catch(e){}}
+document.querySelectorAll('.lang button').forEach(function(x){x.onclick=function(){set(x.getAttribute('data-set'))}});
+var l='tr';try{l=localStorage.getItem('kirinti_testlang')||''}catch(e){}
+if(!l){var n=(navigator.language||'tr').slice(0,2);l=(n==='de'||n==='en')?n:'tr'}
+set(l);
+document.getElementById('share').onclick=function(){
+var t={tr:'Kırıntı test sürümüne katıl (1 dakika, Android):',de:'Teste die Kırıntı-App (1 Minute, Android):',en:'Join the Kırıntı test (1 minute, Android):'}[b.getAttribute('data-lang')];
+if(navigator.share){navigator.share({title:'Kırıntı',text:t,url:url}).catch(function(){})}
+else{window.open('https://wa.me/?text='+encodeURIComponent(t+' '+url),'_blank')}};
+})();
+</script>
+</body></html>
