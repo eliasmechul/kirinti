@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /test/
+Sitemap: https://kirinti-app.com/sitemap.xml
