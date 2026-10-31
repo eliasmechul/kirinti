@@ -212,7 +212,7 @@ function card(p) {
   const b = p.businesses;
   return `<article class="card" data-id="${p.id}">
     <div class="ph"><img class="cover" src="${photo(p)}" alt="${esc(p.title)}" loading="lazy" decoding="async">
-      <div class="tags"><span class="tagq ${p.qty_available ? '' : 'out'}">${p.qty_available ? p.qty_available + ' kaldı' : 'Tükendi'}</span>${hot(p) ? `<span class="tagq hot">Son ${minsLeft(p)} dk</span>` : ''}</div>
+      <div class="tags"><span class="tagq ${p.qty_available ? '' : 'out'}">${p.qty_available ? p.qty_available + ' kaldı' : 'Tükendi'}</span>${hot(p) ? `<span class="tagq hot">Son ${minsLeft(p)} dk</span>` : ''}${b.owner_id ? '' : '<span class="tagq demo">Örnek</span>'}</div>
       <div class="logo-c">${initial(b)}</div></div>
     <div class="body"><div class="top-row"><div class="nm">${esc(b.name)}</div>
       <button class="heart-o ${isFav(b.id) ? 'on' : ''}" data-fav="${b.id}" aria-label="Favorilere ekle veya çıkar" type="button">${ICON.heart}</button></div>

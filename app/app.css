@@ -487,3 +487,5 @@ button,a,.card,summary{touch-action:manipulation}
 .savedcard .linkbtn{margin:0;color:var(--mut)}
 
 [hidden]{display:none!important}
+
+.tags .tagq.demo{background:var(--ink);color:var(--pink-xl)}
