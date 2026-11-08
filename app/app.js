@@ -852,6 +852,7 @@ async function renderBiz() {
     sb.rpc('business_stats', { p_business: myBiz.id }),
     sb.from('business_terms').select('commission_rate, promo_rate, promo_until').eq('business_id', myBiz.id).maybeSingle(),
   ]);
+  const { data: pay } = await sb.rpc('my_payout_summary', { p_business: myBiz.id });   // hakediş özeti (tablo yoksa null)
   const t = st || {};
   const tm = terms || { commission_rate: 0.30, promo_rate: 0.20, promo_until: null };
   const todayIso = todayTR(), promoOn = !!tm.promo_until && tm.promo_until >= todayIso;
@@ -863,6 +864,13 @@ async function renderBiz() {
   root.innerHTML = `<p><b>${esc(myBiz.name)}</b> <span class="muted">· ${esc(myBiz.address)}</span></p>
     <div class="stats">${tile(t.today_orders ?? 0, 'bugün sipariş')}${tile(t.today_delivered ?? 0, 'bugün teslim')}${tile(money(t.today_revenue ?? 0) + ' ₺', 'bugünkü kazanç')}${tile(t.total_meals ?? 0, 'kurtarılan öğün')}${tile(t.avg_rating ? '★ ' + String(t.avg_rating).replace('.', ',') : '–', (t.reviews ?? 0) + ' yorum')}${tile(t.no_shows ?? 0, 'gelmeyen')}</div>
     <p class="muted" style="margin-top:8px">${commNote}</p>
+    ${pay ? `<h3 class="sub">Hakediş ve ödeme</h3>
+      <p class="muted">Müşteriler Kırıntı'ya öder; komisyon düşüldükten sonra net tutar belirli aralıklarla IBAN'ına havale edilir.${pay.pending_cash_commission > 0 ? ' Mekânda tahsil ettiğin siparişlerin komisyonu hakedişinden mahsup edilir.' : ''}</p>
+      <div class="stats">${tile(pay.pending_orders, 'ödemeyi bekleyen sipariş')}${tile(money(pay.pending_net) + ' ₺', 'sonraki hakediş')}</div>
+      <form id="ibanForm" class="form"><input name="holder" required placeholder="Hesap sahibi (ad soyad / unvan)" value="${esc(pay.holder || '')}" aria-label="Hesap sahibi">
+        <input name="iban" required placeholder="${pay.iban_masked ? esc(pay.iban_masked) + ' (değiştirmek için yeni IBAN yaz)' : 'TR00 0000 0000 0000 0000 0000 00'}" aria-label="IBAN" autocomplete="off">
+        <button class="btn small" type="submit">${pay.iban_masked ? 'IBAN\'ı güncelle' : 'IBAN\'ı kaydet'}</button></form>
+      ${(pay.payouts || []).map(x => `<div class="order"><b>${money(x.net)} ₺</b><span class="muted">${x.period_end.split('-').reverse().join('.')} dönemi · ${x.orders} sipariş</span><span class="badge ${x.status === 'odendi' ? '' : 'off'}">${x.status === 'odendi' ? 'Ödendi' : 'Hazırlanıyor'}</span></div>`).join('')}` : ''}
     <form id="bagForm" class="form"><h3>Yeni sürpriz paket</h3>
       <input name="title" required placeholder="Paket adı (örn. Akşam Yemeği Paketi)" aria-label="Paket adı">
       <input name="desc" placeholder="Kısa açıklama / alerjen bilgisi" aria-label="Açıklama">
@@ -882,6 +890,13 @@ async function renderBiz() {
     ${live.map(o => `<div class="order"><b>${o.qty}× ${esc(o.bags.title)}</b>
       <div class="row2"><input data-code="${o.id}" placeholder="Müşteri kodu" inputmode="numeric" maxlength="4" aria-label="Müşteri kodu" style="min-height:44px;border:2px solid var(--line);border-radius:12px;padding:0 12px;width:100%"><button class="btn small" data-ok="${o.id}" type="button">Onayla</button></div></div>`).join('') || '<p class="muted">Bekleyen sipariş yok.</p>'}
     ${past.length ? `<h3 class="sub">Geçmiş siparişler</h3>${past.slice(0, 15).map(o => `<div class="order"><b>${o.qty}× ${esc(o.bags.title)}</b><span class="badge ${o.status === 'teslim' ? '' : 'off'}">${{ teslim: 'Teslim edildi', iptal: 'İptal edildi', gelmedi: 'Gelmedi' }[o.status]}</span></div>`).join('')}` : ''}`;
+  if ($('#ibanForm')) $('#ibanForm').onsubmit = async e => {
+    e.preventDefault();
+    const f = Object.fromEntries(new FormData(e.target));
+    const { error } = await sb.rpc('save_payout_details', { p_business: myBiz.id, p_holder: f.holder, p_iban: f.iban });
+    if (error) return toast(error.message);
+    toast('Ödeme bilgisi kaydedildi'); renderBiz();
+  };
   $('#bagForm').onsubmit = async e => {
     e.preventDefault();
     const f = Object.fromEntries(new FormData(e.target)), btn = e.submitter; btn.disabled = true;
