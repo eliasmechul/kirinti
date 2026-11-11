@@ -1,5 +1,6 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { cfg, iyzi } from '../_shared/iyzico.ts';
+import { settleSession, stripe, stripeKey } from '../_shared/stripe.ts';
 
 // iyzico ödeme sonrası buraya POST eder (token). Sonucu iyzico'dan DOĞRULAYIP siparişi kesinleştiririz;
 // tarayıcıdan gelen hiçbir bilgiye güvenilmez. Kullanıcı kartını kaydettiyse yalnızca iyzico'nun verdiği anahtar ve son 4 hane saklanır.
@@ -8,6 +9,16 @@ Deno.serve(async (req) => {
   const site = Deno.env.get('SITE_URL') || 'https://kirinti-app.com';
   const back = (q: string) => new Response(null, { status: 303, headers: { Location: `${site}/app/?${q}` } });
   try {
+    // Stripe dönüşü: oturum Stripe'tan sunucuda doğrulanır (tarayıcıdan gelene güvenilmez)
+    const sid = new URL(req.url).searchParams.get('session_id');
+    if (sid) {
+      const key = stripeKey();
+      if (!key) return back('pay=fail');
+      const ses = await stripe(key, `/v1/checkout/sessions/${encodeURIComponent(sid)}`, undefined, 'GET');
+      const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+      const r = await settleSession(db, key, ses);
+      return back(r === 'ok' ? `pay=ok&order=${ses.client_reference_id}` : 'pay=fail');
+    }
     const c = cfg();
     if (!c) return back('pay=fail');
     const ct = req.headers.get('content-type') || '';

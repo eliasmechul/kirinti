@@ -603,7 +603,7 @@ const PAY_ONLINE = (() => {
 const PAY_TEST_MODE = true;
 const PAY = {
   mekanda: { name: 'Mekânda öde', sub: 'Paketi teslim alırken mekânda ödersin', icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10l1.5-5h15L21 10M4 10v9h16v-9M9 19v-5h6v5"/></svg>' },
-  kart: { name: 'Kredi / banka kartı', sub: 'Visa, Mastercard, Troy · iyzico ile güvenli ödeme', icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6 15h4"/></svg>' },
+  kart: { name: 'Kredi / banka kartı', sub: 'Visa, Mastercard, Troy · güvenli ödeme sayfası', icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6 15h4"/></svg>' },
 };
 
 function confirmSheet(p, q) {
@@ -613,11 +613,11 @@ function confirmSheet(p, q) {
     <p><b>${q}× ${esc(p.title)}</b><br><span class="muted">${esc(p.businesses.name)} · Bugün ${hm(p.pickup_from)} - ${hm(p.pickup_to)}</span></p>
     <div class="pay-h">Ödeme</div>
     ${PAY_ONLINE ? '' : `<div class="pay-list"><div class="pay-opt on"><span class="pay-ic">${PAY.mekanda.icon}</span><span class="pay-t"><b>${PAY.mekanda.name}</b><small>${PAY.mekanda.sub}</small></span></div></div>`}
-    <div class="pay-list" ${PAY_ONLINE ? '' : 'hidden'}><div class="pay-opt on"><span class="pay-ic">${PAY.kart.icon}</span><span class="pay-t"><b>${savedCard ? esc((savedCard.brand || 'Kart').replace(/_/g, ' ')) + ' •••• ' + esc(savedCard.last4 || '') : PAY.kart.name}</b><small>${savedCard ? 'Kayıtlı kartınla öde · iyzico ile güvenli ödeme' : PAY.kart.sub}</small></span></div></div>
+    <div class="pay-list" ${PAY_ONLINE ? '' : 'hidden'}><div class="pay-opt on"><span class="pay-ic">${PAY.kart.icon}</span><span class="pay-t"><b>${savedCard ? esc((savedCard.brand || 'Kart').replace(/_/g, ' ')) + ' •••• ' + esc(savedCard.last4 || '') : PAY.kart.name}</b><small>${savedCard ? 'Kayıtlı kartınla öde · güvenli ödeme sayfası' : PAY.kart.sub}</small></span></div></div>
     <div class="sum"><div><span>Paket</span><span>${money(sub)} ₺</span></div><div class="tot"><span>Toplam</span><b>${money(sub)} ₺</b></div></div>
     ${PAY_ONLINE ? '' : '<p class="muted">Ödemeyi paketi teslim alırken mekânda yaparsın; şimdi hiçbir ödeme alınmaz. Teslim saati içinde kodunu göstermen yeterli. Gelemeyeceksen teslim saati başlamadan siparişi iptal et.</p>'}
-    ${PAY_TEST_MODE ? '<p class="muted" style="color:#B3261E"><b>Test aşaması:</b> Şu an yalnızca iyzico test kartları kabul edilir; gerçek kartından para çekilmez ve gerçek kartın reddedilir.</p>' : ''}
-    <p class="muted" ${PAY_ONLINE ? '' : 'hidden'}>Kart bilgilerini iyzico'nun güvenli ödeme sayfasında girersin; istersen kartını orada kaydedip sonraki ödemelerde tek dokunuşla ödersin. Kırıntı kart numaranı görmez ve saklamaz. Ödeme sayfasına geçtikten sonra paketin 10 dakika senin için ayrılır.</p>
+    ${PAY_TEST_MODE ? '<p class="muted" style="color:#B3261E"><b>Test aşaması:</b> Şu an yalnızca test kartları kabul edilir; gerçek kartından para çekilmez ve gerçek kartın reddedilir.</p>' : ''}
+    <p class="muted" ${PAY_ONLINE ? '' : 'hidden'}>Kart bilgilerini ödeme sağlayıcının güvenli sayfasında girersin (Apple Pay / Google Pay varsa orada da çıkar). Kırıntı kart numaranı görmez ve saklamaz. Ödeme sayfasına geçtikten sonra paketin 10 dakika senin için ayrılır.</p>
     <div class="swipe" id="sw" role="button" aria-label="Kaydırarak onayla"><div class="thumb" id="th">${ICON.go}</div><span>${PAY_ONLINE ? 'Kaydırarak öde' : 'Kaydırarak ayır'}</span></div>
     <button class="btn sec" id="x" type="button">Vazgeç</button>`);
   $('#x').onclick = closeSheet;
@@ -703,7 +703,7 @@ const FAQ = [
   ['Paketimi nasıl alırım?', 'Paketi rezerve et, belirtilen saat aralığında mekâna git ve 4 haneli teslim kodunu göster. Kodu Siparişler sekmesinde her zaman bulabilirsin.'],
   ['Siparişimi iptal edebilir miyim?', 'Evet. Teslim saati başlamadan önce Siparişler sekmesinden iptal edebilirsin; paket stoğa geri döner.' + (PAY_ONLINE ? ' Ödemen aynı karta iade edilir.' : ' Ödemeyi teslimde yaptığın için ücret alınmaz.')],
   ['Paketi zamanında alamazsam?', 'Teslim saati geçen sipariş “teslim alınmadı” olarak kapanır. Rezerve etmeden önce saat aralığını kontrol et.'],
-  ['Ödeme nasıl çalışıyor?', PAY_ONLINE ? 'Ödemeyi kartınla, iyzico\'nun güvenli ödeme sayfasında yaparsın. Kart bilgilerin Kırıntı\'ya ulaşmaz ve saklanmaz.' : 'Şimdilik paketi uygulamadan ayırırsın, ödemeyi teslim alırken mekânda yaparsın. Kartla çevrim içi ödeme çok yakında.'],
+  ['Ödeme nasıl çalışıyor?', PAY_ONLINE ? 'Ödemeyi kartınla, güvenli ödeme sayfasında yaparsın. Kart bilgilerin Kırıntı\'ya ulaşmaz ve saklanmaz.' : 'Şimdilik paketi uygulamadan ayırırsın, ödemeyi teslim alırken mekânda yaparsın. Kartla çevrim içi ödeme çok yakında.'],
   ['İşletmemi nasıl eklerim?', 'Profil sekmesindeki İşletme paneli bölümünden mekânını kaydet, paketlerini ekle veya tekrarlayan paket kur.'],
 ];
 function showHelp() {

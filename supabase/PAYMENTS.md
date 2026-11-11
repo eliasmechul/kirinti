@@ -45,3 +45,18 @@
 - Alıcı kimlik no alanı iyzico API'sinde zorunlu; şimdilik sabit `11111111111` gönderiliyor (iyzico bunu doğrulamıyorsa sorun yok, doğruluyorsa kullanıcıdan alınmalı).
 - `paymentPageUrl` alanı sandbox yanıtında gelmezse `pay-init` "Ödeme başlatılamadı" döner; o durumda yanıttaki `checkoutFormContent` ile sayfa içi form kullanılmalı.
 - İmza (IYZWSv2) ve iptal/iade çağrıları yalnızca iyzico belgelerine göre yazıldı; **gerçek sandbox anahtarlarıyla ilk denemeye kadar test edilmedi**.
+
+## Ödeme sağlayıcısı: Stripe veya iyzico (PAY_PROVIDER)
+Aynı Edge Functions (`pay-init`, `pay-callback`, `pay-cancel`) iki sağlayıcıyı destekler; seçim Supabase Secret'ı `PAY_PROVIDER` ile yapılır (`stripe` | `iyzico`, yoksa iyzico). Uygulama değişmez, geçiş koda dokunmadan yapılır.
+
+**Stripe'ı açmak (Nutzer yapar, anahtarları sohbete yazma):**
+1. Stripe Dashboard (önce **Test modu**): Developers → API keys → Secret key. Supabase → Edge Functions → Secrets: `STRIPE_SECRET_KEY`.
+2. Stripe → Developers → Webhooks → endpoint ekle: `https://dkcwjgonziqizaouypsd.supabase.co/functions/v1/stripe-webhook`, olaylar: `checkout.session.completed` (ve `checkout.session.async_payment_succeeded`). Çıkan "Signing secret" (`whsec_…`) → Secret `STRIPE_WEBHOOK_SECRET`.
+3. Secret `PAY_PROVIDER` = `stripe`.
+4. Test kartı: 4242 4242 4242 4242, gelecekteki tarih, herhangi CVC. Sonra canlı anahtara geçilir.
+
+**Akış:** `pay-init` Stripe Checkout oturumu açar (TRY, tutar sunucuda sipariş toplamından). Müşteri Stripe sayfasında öder (Apple/Google Pay dahil). Dönüşte `pay-callback` oturumu Stripe'tan doğrulayıp `finalize_payment` ile kesinleştirir; `stripe-webhook` aynı işi yedek olarak yapar (sayfa kapansa bile). Sipariş 10 dk sonra serbest kalmışsa geç ödeme otomatik iade edilir. İptal: `pay-cancel` `payment_ref` `pi_` ile başlıyorsa Stripe iadesi yapar, aksi hâlde iyzico. Eski iyzico siparişleri geçişten sonra da iptal/iade edilebilir.
+
+**iyzico'ya geçiş (sonra):** `PAY_PROVIDER` = `iyzico` yapılır, iyzico Secrets (`IYZICO_API_KEY`, `IYZICO_SECRET_KEY`, `IYZICO_BASE_URL`) gerçek anahtarlarla doldurulur. Kayıtlı kart (tek dokunuş) yalnızca iyzico'da vardır; Stripe'ta henüz kaydedilmez.
+
+**Dikkat:** Stripe hesabı ve TRY ile Türk kartı kabulü, Stripe'ın hesap ülkesi/kuralları ve Türk mevzuatı (6493, vergi) için ayrıca doğrulanmalıdır.
