@@ -17,3 +17,8 @@ Tüm fotoğraflar [Unsplash](https://unsplash.com) üzerinden, [Unsplash Lisans�
 | baker.jpg | @andylid0 | https://unsplash.com/photos/RndRFJ1v1kk |
 | phone.jpg | Kelly Sikkema (@kellysikkema) | https://unsplash.com/photos/roJv_dmHKVA |
 | bread.jpg | @andylid0 (baker.jpg'den kırpıldı) | https://unsplash.com/photos/RndRFJ1v1kk |
+| vegetables.jpg | Eva Bronzini (Pexels) | https://www.pexels.com/photo/fresh-vegetables-and-flowers-in-wooden-crate-5503195/ |
+| fruit.jpg | Pexels (fotoğrafçı adı sayfada) | https://www.pexels.com/photo/several-fruits-in-brown-wicker-basket-235294/ |
+| ready.jpg | Julia M Cameron (Pexels) | https://www.pexels.com/photo/packed-food-in-containers-6995262/ |
+
+vegetables.jpg, fruit.jpg ve ready.jpg [Pexels Lisansı](https://www.pexels.com/license/) kapsamındadır (ticari kullanım serbest). 900×900 kırpılarak indirildi.
