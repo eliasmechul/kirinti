@@ -1,7 +1,7 @@
 // Stripe yardımcıları (Checkout). Anahtarlar yalnızca Supabase "Secrets" içinde durur: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET.
 // Sağlayıcı seçimi: PAY_PROVIDER = 'stripe' | 'iyzico' (varsayılan iyzico).
 export const provider = () => (Deno.env.get('PAY_PROVIDER') || 'iyzico').toLowerCase();
-export const stripeKey = () => Deno.env.get('STRIPE_SECRET_KEY') || null;
+export const stripeKey = () => Deno.env.get('STRIPE_SECRET_KEY') || Deno.env.get('stripe_secret_key') || null;
 
 // Stripe isteklerinin gövdesi form-encoded ve iç içe alanlar köşeli parantezle yazılır
 function enc(v: unknown, prefix: string, out: string[]) {
