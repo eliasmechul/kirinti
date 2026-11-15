@@ -749,7 +749,9 @@ const canCancel = o => {
   return o.payment_method === 'mekanda' ? Date.now() + 3 * 3600e3 <= start : Date.now() < start;   // kartlı: teslim başlayana kadar (3 saatten sonra %50 kesinti); mekânda ödemeli: teslimden en az 3 saat önce
 };
 const isLateCancel = o => o.payment_method !== 'mekanda' && Date.now() + 3 * 3600e3 > new Date(`${o.bags.pickup_date}T${o.bags.pickup_from}+03:00`).getTime();
-const cancelLate = o => o.status === 'bekliyor' && !canCancel(o) && o.bags.pickup_date >= todayTR();
+const cancelLate = o => o.status === 'bekliyor' && !canCancel(o) && o.bags.pickup_date >= todayTR()
+  && (o.payment_method === 'mekanda' ? Date.now() < new Date(`${o.bags.pickup_date}T${o.bags.pickup_from}+03:00`).getTime() : false);
+const pickupRunning = o => o.status === 'bekliyor' && !canCancel(o) && !cancelLate(o);
 const orderDone = o => o.status !== 'bekliyor' || (o.bags.pickup_date < todayTR() || (o.bags.pickup_date === todayTR() && nowTR() > hm(o.bags.pickup_to)));
 function impact() {
   const got = myOrders.filter(o => o.status === 'teslim');
@@ -768,6 +770,7 @@ function orderCard(o) {
   else if (o.status === 'gelmedi' || !live) foot = '<span class="badge off">Teslim alınmadı</span>';
   else foot = `<span class="muted">Kodu mekâna göstermek için dokun</span><div class="codebox">${esc(o.code)}</div>`
     + (canCancel(o) ? `<div><button class="btn small sec" data-cancel="${o.id}" type="button">Siparişi iptal et</button></div>` : cancelLate(o) ? '<p class="muted">İptal süresi geçti: mekânda ödemeli siparişler teslim saatinden en az 3 saat önce iptal edilebilir.</p>' : '')
+    + (pickupRunning(o) ? '<p class="muted">Teslim saati başladı: sipariş artık iptal edilemez.</p>' : '')
     + (canCancel(o) && isLateCancel(o) ? '<p class="muted">Teslime 3 saatten az kaldı: iptalde tutarın %50\'si kesilir.</p>' : '');
   return `<div class="order" ${live ? `data-oid="${o.id}" style="cursor:pointer"` : ''}><b>${esc(p.businesses.name)}</b>
     <span class="muted">${o.qty}× ${esc(p.title)} · ${money(o.total)} ₺</span><span class="muted">${when}</span>${foot}</div>`;
