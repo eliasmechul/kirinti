@@ -709,7 +709,7 @@ function confetti(root) {
 const FAQ = [
   ['Sürpriz paket nedir?', 'Kapanıştan önce satılamayan ama hâlâ taptaze ürünlerin, içeriği sürpriz olarak, normal fiyatın çok altında satıldığı pakettir. İçerik gün sonuna göre değişir; alerjen bilgisi paket sayfasındadır.'],
   ['Paketimi nasıl alırım?', 'Paketi rezerve et, belirtilen saat aralığında mekâna git ve 4 haneli teslim kodunu göster. Kodu Siparişler sekmesinde her zaman bulabilirsin.'],
-  ['Siparişimi iptal edebilir miyim?', 'Teslim saatinden en az 3 saat öncesine kadar Siparişler sekmesinden ücretsiz iptal edebilirsin; paket stoğa geri döner' + (PAY_ONLINE ? ' ve ödemen aynı karta iade edilir. Teslime 3 saatten az kaldıysa, teslim başlamadan önce iptal edebilirsin ama tutarın %50\'si kesilir (işletme paketi senin için ayırdığı için). Teslim başladıktan sonra iptal edilemez.' : '. Ödemeyi teslimde yaptığın için ücret alınmaz.')],
+  ['Siparişimi iptal edebilir miyim?', 'Teslim saatinden en az 3 saat öncesine kadar Siparişler sekmesinden ücretsiz iptal edebilirsin; paket stoğa geri döner' + (PAY_ONLINE ? ' ve ödemen aynı karta iade edilir. Teslime 3 saatten az kaldıysa, teslim başlamadan önce iptal edebilirsin ama tutarın %30\'si kesilir (işletme paketi senin için ayırdığı için). Teslim başladıktan sonra iptal edilemez.' : '. Ödemeyi teslimde yaptığın için ücret alınmaz.')],
   ['Paketi zamanında alamazsam?', 'Teslim saati geçen sipariş “teslim alınmadı” olarak kapanır. Rezerve etmeden önce saat aralığını kontrol et.'],
   ['Ödeme nasıl çalışıyor?', PAY_ONLINE ? 'Ödemeyi kartınla, güvenli ödeme sayfasında yaparsın. Kart bilgilerin Kırıntı\'ya ulaşmaz ve saklanmaz.' : 'Şimdilik paketi uygulamadan ayırırsın, ödemeyi teslim alırken mekânda yaparsın. Kartla çevrim içi ödeme çok yakında.'],
   ['İşletmemi nasıl eklerim?', 'Profil sekmesindeki İşletme paneli bölümünden mekânını kaydet, paketlerini ekle veya tekrarlayan paket kur.'],
@@ -746,7 +746,7 @@ function showOnboarding() {
 const canCancel = o => {
   const g = o.bags; if (o.status !== 'bekliyor') return false;
   const start = new Date(`${g.pickup_date}T${g.pickup_from}+03:00`).getTime();
-  return o.payment_method === 'mekanda' ? Date.now() + 3 * 3600e3 <= start : Date.now() < start;   // kartlı: teslim başlayana kadar (3 saatten sonra %50 kesinti); mekânda ödemeli: teslimden en az 3 saat önce
+  return o.payment_method === 'mekanda' ? Date.now() + 3 * 3600e3 <= start : Date.now() < start;   // kartlı: teslim başlayana kadar (3 saatten sonra %30 kesinti); mekânda ödemeli: teslimden en az 3 saat önce
 };
 const isLateCancel = o => o.payment_method !== 'mekanda' && Date.now() + 3 * 3600e3 > new Date(`${o.bags.pickup_date}T${o.bags.pickup_from}+03:00`).getTime();
 const cancelLate = o => o.status === 'bekliyor' && !canCancel(o) && o.bags.pickup_date >= todayTR()
@@ -771,7 +771,7 @@ function orderCard(o) {
   else foot = `<span class="muted">Kodu mekâna göstermek için dokun</span><div class="codebox">${esc(o.code)}</div>`
     + (canCancel(o) ? `<div><button class="btn small sec" data-cancel="${o.id}" type="button">Siparişi iptal et</button></div>` : cancelLate(o) ? '<p class="muted">İptal süresi geçti: mekânda ödemeli siparişler teslim saatinden en az 3 saat önce iptal edilebilir.</p>' : '')
     + (pickupRunning(o) ? '<p class="muted">Teslim saati başladı: sipariş artık iptal edilemez.</p>' : '')
-    + (canCancel(o) && isLateCancel(o) ? '<p class="muted">Teslime 3 saatten az kaldı: iptalde tutarın %50\'si kesilir.</p>' : '');
+    + (canCancel(o) && isLateCancel(o) ? '<p class="muted">Teslime 3 saatten az kaldı: iptalde tutarın %30\'si kesilir.</p>' : '');
   return `<div class="order" ${live ? `data-oid="${o.id}" style="cursor:pointer"` : ''}><b>${esc(p.businesses.name)}</b>
     <span class="muted">${o.qty}× ${esc(p.title)} · ${money(o.total)} ₺</span><span class="muted">${when}</span>${foot}</div>`;
 }
@@ -795,7 +795,7 @@ async function cancelOrder(id) {
   const { data: q, error: qe } = await sb.rpc('cancel_quote', { p_order_id: id });
   if (qe) return toast(qe.message || 'İptal edilemedi');
   const msg = q.late
-    ? `Teslime 3 saatten az kaldı: tutarın %50'si (${money(q.fee)} ₺) kesilir, ${money(q.refund)} ₺ iade edilir. İptal edilsin mi?`
+    ? `Teslime 3 saatten az kaldı: tutarın %30'si (${money(q.fee)} ₺) kesilir, ${money(q.refund)} ₺ iade edilir. İptal edilsin mi?`
     : 'Siparişi iptal etmek istiyor musun? Ödemen iade edilir.';
   if (!await ask((window.T || String)(msg))) return;
   const { data, error } = await sb.functions.invoke('pay-cancel', { body: { order_id: id } });

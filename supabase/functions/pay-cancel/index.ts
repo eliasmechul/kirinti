@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
     if (!user) return json({ error: 'auth' }, 401);
     const { order_id } = await req.json();
 
-    // Kural (sunucuda): teslimden 3 saat öncesine kadar ücretsiz, sonra yalnızca kartlı siparişlerde %50 kesinti
+    // Kural (sunucuda): teslimden 3 saat öncesine kadar ücretsiz, sonra yalnızca kartlı siparişlerde %30 kesinti
     const { data: q, error: ce } = await userClient.rpc('cancel_quote', { p_order_id: order_id });
     if (ce) return json({ error: ce.message });
     const fee = Number(q?.fee ?? 0), refund = Number(q?.refund ?? 0);
