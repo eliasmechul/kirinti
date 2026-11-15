@@ -48,6 +48,9 @@ const DEFAULT_LOC = [40.9908, 29.0290];
 const CITIES = [['Adana',37.0000,35.3213],['Adıyaman',37.7648,38.2786],['Afyonkarahisar',38.7507,30.5567],['Ağrı',39.7191,43.0503],['Aksaray',38.3687,34.0370],['Amasya',40.6499,35.8353],['Ankara',39.9334,32.8597],['Antalya',36.8969,30.7133],['Ardahan',41.1105,42.7022],['Artvin',41.1828,41.8183],['Aydın',37.8560,27.8416],['Balıkesir',39.6484,27.8826],['Bartın',41.6344,32.3375],['Batman',37.8812,41.1351],['Bayburt',40.2552,40.2249],['Bilecik',40.1451,29.9799],['Bingöl',38.8854,40.4980],['Bitlis',38.4006,42.1095],['Bolu',40.7392,31.6089],['Burdur',37.7203,30.2908],['Bursa',40.1826,29.0665],['Çanakkale',40.1553,26.4142],['Çankırı',40.6013,33.6134],['Çorum',40.5506,34.9556],['Denizli',37.7765,29.0864],['Diyarbakır',37.9144,40.2306],['Düzce',40.8438,31.1565],['Edirne',41.6818,26.5623],['Elazığ',38.6810,39.2264],['Erzincan',39.7500,39.5000],['Erzurum',39.9055,41.2658],['Eskişehir',39.7767,30.5206],['Gaziantep',37.0662,37.3833],['Giresun',40.9128,38.3895],['Gümüşhane',40.4603,39.4814],['Hakkari',37.5744,43.7408],['Hatay',36.4018,36.3498],['Iğdır',39.9237,44.0450],['Isparta',37.7648,30.5566],['İstanbul',41.0082,28.9784],['İzmir',38.4237,27.1428],['Kahramanmaraş',37.5858,36.9371],['Karabük',41.2061,32.6204],['Karaman',37.1759,33.2287],['Kars',40.6013,43.0975],['Kastamonu',41.3887,33.7827],['Kayseri',38.7312,35.4787],['Kırıkkale',39.8468,33.5153],['Kırklareli',41.7333,27.2167],['Kırşehir',39.1425,34.1709],['Kilis',36.7184,37.1212],['Kocaeli',40.8533,29.8815],['Konya',37.8746,32.4932],['Kütahya',39.4167,29.9833],['Malatya',38.3552,38.3095],['Manisa',38.6191,27.4289],['Mardin',37.3212,40.7245],['Mersin',36.8000,34.6333],['Muğla',37.2153,28.3636],['Muş',38.7432,41.5064],['Nevşehir',38.6939,34.6857],['Niğde',37.9667,34.6833],['Ordu',40.9839,37.8764],['Osmaniye',37.0742,36.2478],['Rize',41.0201,40.5234],['Sakarya',40.7569,30.3783],['Samsun',41.2867,36.3300],['Siirt',37.9333,41.9500],['Sinop',42.0231,35.1531],['Sivas',39.7477,37.0179],['Şanlıurfa',37.1591,38.7969],['Şırnak',37.5164,42.4611],['Tekirdağ',40.9833,27.5167],['Tokat',40.3167,36.5500],['Trabzon',41.0027,39.7168],['Tunceli',39.1079,39.5401],['Uşak',38.6823,29.4082],['Van',38.4891,43.4089],['Yalova',40.6500,29.2667],['Yozgat',39.8181,34.8147],['Zonguldak',41.4564,31.7987]];
 let savedCard = null;
 let user = null, bags = [], myOrders = [], myBiz = null, pending = null, ratings = {}, myReviews = {}, myDonated = 0;
+let myCredit = 0, refData = null;   // davet: kredi bakiyesi ve kod
+try { const rc = new URLSearchParams(location.search).get('ref'); if (rc) localStorage.setItem('kirinti_ref', rc.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12)); } catch {}
+const refStored = () => { try { return localStorage.getItem('kirinti_ref') || ''; } catch { return ''; } };
 let cat = 'hepsi', query = '', me = DEFAULT_LOC, locMode = 'preset', selId = null;
 let favs = [], SECTIONS = {};
 try { favs = JSON.parse(localStorage.getItem('kirinti_fav') || '[]'); } catch {}
@@ -432,6 +435,7 @@ function authSheet(msg, mode = 'in') {
     <form class="form" id="authForm" style="margin-top:0">
       <input name="email" type="email" required placeholder="E-posta" autocomplete="email" aria-label="E-posta">
       <input name="password" type="password" required minlength="6" placeholder="Şifre (en az 6 karakter)" autocomplete="${up ? 'new-password' : 'current-password'}" aria-label="Şifre">
+      ${up ? `<input name="ref" placeholder="Davet kodu (isteğe bağlı)" autocomplete="off" maxlength="12" value="${esc(refStored())}" aria-label="Davet kodu">` : ''}
       <button class="btn" type="submit">${up ? 'Kayıt ol' : 'Giriş yap'}</button>
       ${up ? '' : '<button class="linkbtn" type="button" id="forgot">Şifremi unuttum</button>'}</form>
     <button class="btn sec" id="x" type="button">Kapat</button>`);
@@ -443,6 +447,8 @@ function authSheet(msg, mode = 'in') {
     e.preventDefault();
     const btn = e.submitter; btn.disabled = true;
     if (up) {
+      const rcv = String(new FormData($('#authForm')).get('ref') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (rcv) { try { localStorage.setItem('kirinti_ref', rcv); } catch {} }
       const { data, error } = await sb.auth.signUp(creds());
       btn.disabled = false;
       if (error) return toast(/rate limit/i.test(error.message) ? 'Çok fazla deneme yapıldı, biraz sonra tekrar dene' : error.message);
@@ -494,7 +500,7 @@ async function delCard() {
 function renderAuthBars() {
   document.querySelectorAll('.authbar').forEach(el => {
     el.innerHTML = user
-      ? `<div class="me"><span class="av">${esc((user.email || '?')[0].toUpperCase())}</span><div><b>${esc(user.email)}</b><small>${myOrders.length} sipariş · ${favs.length} favori</small></div><button class="btn small sec" data-out type="button">Çıkış</button></div>${savedCardHtml()}<button class="linkbtn" data-delacc type="button">Hesabımı sil</button>${(() => { const m = impact(); return (m.meals || myDonated) ? `<div class="impact"><div><b>${m.meals}</b><small>öğün kurtardın</small></div><div><b>${money(m.saved)} ₺</b><small>tasarruf</small></div><div><b>${m.co2.toFixed(1).replace('.', ',')} kg</b><small>CO₂ azaldı*</small></div>${myDonated > 0 ? `<div class="wide"><b>${money(myDonated)} ₺</b><small>Filistin'e bağış (test)</small></div>` : ''}<p>*Kurtarılan öğün başına ortalama 2,5 kg CO₂e varsayımıyla.</p></div>` : ''; })()}`
+      ? `<div class="me"><span class="av">${esc((user.email || '?')[0].toUpperCase())}</span><div><b>${esc(user.email)}</b><small>${myOrders.length} sipariş · ${favs.length} favori</small></div><button class="btn small sec" data-out type="button">Çıkış</button></div>${savedCardHtml()}<div class="refcard">${refHtml()}</div><button class="linkbtn" data-delacc type="button">Hesabımı sil</button>${(() => { const m = impact(); return (m.meals || myDonated) ? `<div class="impact"><div><b>${m.meals}</b><small>öğün kurtardın</small></div><div><b>${money(m.saved)} ₺</b><small>tasarruf</small></div><div><b>${m.co2.toFixed(1).replace('.', ',')} kg</b><small>CO₂ azaldı*</small></div>${myDonated > 0 ? `<div class="wide"><b>${money(myDonated)} ₺</b><small>Filistin'e bağış (test)</small></div>` : ''}<p>*Kurtarılan öğün başına ortalama 2,5 kg CO₂e varsayımıyla.</p></div>` : ''; })()}`
       : `<button class="btn small" data-in type="button">Giriş yap / Kayıt ol</button>`;
   });
 }
@@ -510,9 +516,41 @@ async function syncFavs() {
 sb.auth.onAuthStateChange((_ev, session) => {
   user = session?.user || null;
   renderAuthBars();
-  setTimeout(() => { loadMyOrders(); loadMyBiz(); syncFavs(); }, 0);
+  setTimeout(() => { loadMyOrders(); loadMyBiz(); syncFavs(); tryRedeem(); loadReferral(); }, 0);
   if (!user) pending = null;
 });
+// ---------- Arkadaşını davet et ----------
+async function tryRedeem() {
+  const code = refStored();
+  if (!user || !code) return;
+  const { data, error } = await sb.rpc('redeem_referral', { p_code: code });
+  if (error) return;
+  try { localStorage.removeItem('kirinti_ref'); } catch {}
+  if (data === 'ok') toast((window.T || String)('Davet kodun eklendi: ilk siparişini teslim alınca ikiniz de 30 ₺ kazanırsınız'));
+  else if (data === 'gecersiz') toast((window.T || String)('Davet kodu geçersiz'));
+  loadReferral();
+}
+async function loadReferral() {
+  if (!user) { refData = null; myCredit = 0; return; }
+  const { data } = await sb.rpc('my_referral');
+  refData = data || null; myCredit = refData ? Number(refData.balance) || 0 : 0;
+  document.querySelectorAll('.refcard').forEach(el => { el.innerHTML = refHtml(); });
+}
+function refHtml() {
+  if (!refData) return '';
+  const r = refData, T = window.T || String;
+  return `<div class="ref"><h3>${esc(T('Arkadaşını davet et, ikiniz de 30 ₺ kazanın'))} 🎁</h3>
+    <p class="muted">${esc(T('Arkadaşın kodunla kaydolup ilk siparişini teslim alınca ikinize de 30 ₺ kredi yüklenir. Kredi, kartlı ödemelerde otomatik düşer.'))}</p>
+    <div class="refcode"><b>${esc(r.code)}</b><button class="btn small" data-shareref type="button">${esc(T('Davet linkini paylaş'))}</button></div>
+    <small class="muted">${r.invited} ${esc(T('davet'))} · ${r.rewarded} ${esc(T('ödül'))} · ${esc(T('Kredin'))}: <b>${money(r.balance)} ₺</b></small></div>`;
+}
+async function shareRef() {
+  if (!refData) return;
+  const url = `https://kirinti-app.com/app/?ref=${refData.code}`;
+  const text = `Kırıntı ile akşam kalan yemekleri uygun fiyata kurtar. Kodum ${refData.code}: ikimiz de 30 ₺ kazanırız 🥐`;
+  try { if (navigator.share) return await navigator.share({ title: 'Kırıntı', text, url }); } catch { return; }
+  try { await navigator.clipboard.writeText(`${text} ${url}`); toast('Davet metni kopyalandı'); } catch { toast(url); }
+}
 function toggleFav(id) {
   favs = isFav(id) ? favs.filter(x => x !== id) : [...favs, id];
   if (user) (isFav(id) ? sb.from('favorites').insert({ user_id: user.id, business_id: id }) : sb.from('favorites').delete().eq('business_id', id)).then(() => {});
@@ -616,13 +654,13 @@ const PAY = {
 
 function confirmSheet(p, q) {
   if (!user) { pending = { p, q }; return authSheet('Paket ayırmak için giriş yapmalısın.'); }
-  const sub = p.price * q;
+  const sub = p.price * q, cr = PAY_ONLINE ? Math.max(0, Math.min(myCredit, sub - 10)) : 0;
   sheet(`<h3>Siparişi onayla</h3>
     <p><b>${q}× ${esc(p.title)}</b><br><span class="muted">${esc(p.businesses.name)} · Bugün ${hm(p.pickup_from)} - ${hm(p.pickup_to)}</span></p>
     <div class="pay-h">Ödeme</div>
     ${PAY_ONLINE ? '' : `<div class="pay-list"><div class="pay-opt on"><span class="pay-ic">${PAY.mekanda.icon}</span><span class="pay-t"><b>${PAY.mekanda.name}</b><small>${PAY.mekanda.sub}</small></span></div></div>`}
     <div class="pay-list" ${PAY_ONLINE ? '' : 'hidden'}><div class="pay-opt on"><span class="pay-ic">${PAY.kart.icon}</span><span class="pay-t"><b>${savedCard ? esc((savedCard.brand || 'Kart').replace(/_/g, ' ')) + ' •••• ' + esc(savedCard.last4 || '') : PAY.kart.name}</b><small>${savedCard ? 'Kayıtlı kartınla öde · güvenli ödeme sayfası' : PAY.kart.sub}</small></span></div></div>
-    <div class="sum"><div><span>Paket</span><span>${money(sub)} ₺</span></div><div class="tot"><span>Toplam</span><b>${money(sub)} ₺</b></div></div>
+    <div class="sum"><div><span>Paket</span><span>${money(sub)} ₺</span></div>${cr ? `<div><span>Hediye kredisi</span><span>−${money(cr)} ₺</span></div>` : ''}<div class="tot"><span>Toplam</span><b>${money(sub - cr)} ₺</b></div></div>
     ${PAY_ONLINE ? '' : '<p class="muted">Ödemeyi paketi teslim alırken mekânda yaparsın; şimdi hiçbir ödeme alınmaz. Teslim saati içinde kodunu göstermen yeterli. Gelemeyeceksen siparişi teslim saatinden en az 3 saat önce iptal et.</p>'}
     ${PAY_TEST_MODE ? '<p class="muted" style="color:#B3261E"><b>Test aşaması:</b> Şu an yalnızca test kartları kabul edilir; gerçek kartından para çekilmez ve gerçek kartın reddedilir.</p>' : ''}
     <p class="muted" ${PAY_ONLINE ? '' : 'hidden'}>Kart bilgilerini ödeme sağlayıcının güvenli sayfasında girersin (Apple Pay / Google Pay varsa orada da çıkar). Kırıntı kart numaranı görmez ve saklamaz. Ödeme sayfasına geçtikten sonra paketin 10 dakika senin için ayrılır.</p>
@@ -995,6 +1033,7 @@ document.addEventListener('click', async e => {
   const c = t.closest('.card[data-id], .pick-row[data-id]');
   if (c) return openBag(c.dataset.id);
   if (t.closest('[data-fclear]')) { F = { ...F0 }; bq = ''; $('#q').value = ''; saveF(); return renderBrowse(); }
+  if (t.closest('[data-shareref]')) return shareRef();
   const lg = t.closest('[data-lang]'); if (lg) return window.setKirintiLang && window.setKirintiLang(lg.dataset.lang);
   const go = t.closest('[data-go]'); if (go) return setTab(go.dataset.go);
   if (t.closest('[data-help]')) return showHelp();

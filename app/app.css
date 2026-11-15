@@ -489,3 +489,10 @@ button,a,.card,summary{touch-action:manipulation}
 [hidden]{display:none!important}
 
 .tags .tagq.demo{background:var(--ink);color:var(--pink-xl)}
+
+/* Arkadaşını davet et */
+.refcard{margin-top:14px}
+.ref{background:var(--pink-xl);border-radius:20px;padding:16px;display:grid;gap:8px}
+.ref h3{font-size:17px;line-height:1.2}
+.refcode{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:2px dashed var(--line);border-radius:14px;padding:10px 12px}
+.refcode b{font-size:22px;letter-spacing:.12em}
