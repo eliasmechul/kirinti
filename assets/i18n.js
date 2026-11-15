@@ -90,6 +90,7 @@
     'Kodu mekâna göstermek için dokun': 'Tap to show the code at the venue', 'Siparişi iptal et': 'Cancel order', 'Teslim alındı': 'Collected',
     'İptal edildi': 'Cancelled', 'İptal edildi · iade edilecek': 'Cancelled · will be refunded', 'Teslim alınmadı': 'Not collected',
     'Siparişi iptal etmek istiyor musun? Ödemen iade edilir.': 'Do you want to cancel the order? Your payment will be refunded.',
+    'Gelemeyeceksen siparişi teslim saatinden en az 2 saat önce iptal et.': 'If you cannot come, cancel the order at least 2 hours before the pickup time.', 'Teslim saatinden en az 2 saat öncesine kadar iptal edebilirsin.': 'You can cancel up to 2 hours before the pickup time.', 'İptal süresi geçti: sipariş, teslim saatinden en az 2 saat önce iptal edilebilir.': 'Cancellation period over: orders can be cancelled at least 2 hours before the pickup time.', 'Evet': 'Yes', 'Vazgeç': 'Cancel',
     'Sipariş iptal edildi': 'Order cancelled', 'Paketini nasıl buldun?': 'How was your bag?', 'Yorum (isteğe bağlı)': 'Comment (optional)', 'Puanla': 'Rate',
     'Teşekkürler!': 'Thank you!', 'Filistin\'e bağış (test)': 'Donated to Palestine (test)',
     // ---- Favoriler

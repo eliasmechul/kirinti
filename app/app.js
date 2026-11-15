@@ -623,7 +623,7 @@ function confirmSheet(p, q) {
     ${PAY_ONLINE ? '' : `<div class="pay-list"><div class="pay-opt on"><span class="pay-ic">${PAY.mekanda.icon}</span><span class="pay-t"><b>${PAY.mekanda.name}</b><small>${PAY.mekanda.sub}</small></span></div></div>`}
     <div class="pay-list" ${PAY_ONLINE ? '' : 'hidden'}><div class="pay-opt on"><span class="pay-ic">${PAY.kart.icon}</span><span class="pay-t"><b>${savedCard ? esc((savedCard.brand || 'Kart').replace(/_/g, ' ')) + ' •••• ' + esc(savedCard.last4 || '') : PAY.kart.name}</b><small>${savedCard ? 'Kayıtlı kartınla öde · güvenli ödeme sayfası' : PAY.kart.sub}</small></span></div></div>
     <div class="sum"><div><span>Paket</span><span>${money(sub)} ₺</span></div><div class="tot"><span>Toplam</span><b>${money(sub)} ₺</b></div></div>
-    ${PAY_ONLINE ? '' : '<p class="muted">Ödemeyi paketi teslim alırken mekânda yaparsın; şimdi hiçbir ödeme alınmaz. Teslim saati içinde kodunu göstermen yeterli. Gelemeyeceksen teslim saati başlamadan siparişi iptal et.</p>'}
+    ${PAY_ONLINE ? '' : '<p class="muted">Ödemeyi paketi teslim alırken mekânda yaparsın; şimdi hiçbir ödeme alınmaz. Teslim saati içinde kodunu göstermen yeterli. Gelemeyeceksen siparişi teslim saatinden en az 2 saat önce iptal et.</p>'}
     ${PAY_TEST_MODE ? '<p class="muted" style="color:#B3261E"><b>Test aşaması:</b> Şu an yalnızca test kartları kabul edilir; gerçek kartından para çekilmez ve gerçek kartın reddedilir.</p>' : ''}
     <p class="muted" ${PAY_ONLINE ? '' : 'hidden'}>Kart bilgilerini ödeme sağlayıcının güvenli sayfasında girersin (Apple Pay / Google Pay varsa orada da çıkar). Kırıntı kart numaranı görmez ve saklamaz. Ödeme sayfasına geçtikten sonra paketin 10 dakika senin için ayrılır.</p>
     <div class="swipe" id="sw" role="button" aria-label="Kaydırarak onayla"><div class="thumb" id="th">${ICON.go}</div><span>${PAY_ONLINE ? 'Kaydırarak öde' : 'Kaydırarak ayır'}</span></div>
@@ -709,7 +709,7 @@ function confetti(root) {
 const FAQ = [
   ['Sürpriz paket nedir?', 'Kapanıştan önce satılamayan ama hâlâ taptaze ürünlerin, içeriği sürpriz olarak, normal fiyatın çok altında satıldığı pakettir. İçerik gün sonuna göre değişir; alerjen bilgisi paket sayfasındadır.'],
   ['Paketimi nasıl alırım?', 'Paketi rezerve et, belirtilen saat aralığında mekâna git ve 4 haneli teslim kodunu göster. Kodu Siparişler sekmesinde her zaman bulabilirsin.'],
-  ['Siparişimi iptal edebilir miyim?', 'Evet. Teslim saati başlamadan önce Siparişler sekmesinden iptal edebilirsin; paket stoğa geri döner.' + (PAY_ONLINE ? ' Ödemen aynı karta iade edilir.' : ' Ödemeyi teslimde yaptığın için ücret alınmaz.')],
+  ['Siparişimi iptal edebilir miyim?', 'Sipariş, teslim saatinden en az 2 saat öncesine kadar Siparişler sekmesinden iptal edilebilir; paket stoğa geri döner' + (PAY_ONLINE ? ' ve ödemen aynı karta iade edilir. Daha kısa sürede iptal ve iade yapılamaz, çünkü işletme paketi senin için ayırır.' : '. Ödemeyi teslimde yaptığın için ücret alınmaz.')],
   ['Paketi zamanında alamazsam?', 'Teslim saati geçen sipariş “teslim alınmadı” olarak kapanır. Rezerve etmeden önce saat aralığını kontrol et.'],
   ['Ödeme nasıl çalışıyor?', PAY_ONLINE ? 'Ödemeyi kartınla, güvenli ödeme sayfasında yaparsın. Kart bilgilerin Kırıntı\'ya ulaşmaz ve saklanmaz.' : 'Şimdilik paketi uygulamadan ayırırsın, ödemeyi teslim alırken mekânda yaparsın. Kartla çevrim içi ödeme çok yakında.'],
   ['İşletmemi nasıl eklerim?', 'Profil sekmesindeki İşletme paneli bölümünden mekânını kaydet, paketlerini ekle veya tekrarlayan paket kur.'],
@@ -723,7 +723,7 @@ function showHelp() {
 }
 const ONB = [
   [ICON.pin, 'Yakınındakini keşfet', 'Restoran, fırın, kafe ve manavların kapanıştan önce artan yemeklerini haritada ve listede gör.'],
-  [ICON.bag, 'Sürpriz paketini ayır', 'Beğendiğin paketi kaydırarak onayla. Teslim saati başlamadan istediğin zaman iptal edebilirsin.'],
+  [ICON.bag, 'Sürpriz paketini ayır', 'Beğendiğin paketi kaydırarak onayla. Teslim saatinden en az 2 saat öncesine kadar iptal edebilirsin.'],
   [ICON.clock, 'Kodunla teslim al', 'Belirtilen saatte mekâna git, 4 haneli kodunu göster ve paketini al. Yemek çöpe gitmesin.'],
 ];
 function showOnboarding() {
@@ -745,8 +745,9 @@ function showOnboarding() {
 // ---------- Siparişler ----------
 const canCancel = o => {
   const g = o.bags; if (o.status !== 'bekliyor') return false;
-  return g.pickup_date > todayTR() || (g.pickup_date === todayTR() && nowTR() < hm(g.pickup_from));
+  return Date.now() + 2 * 3600e3 <= new Date(`${g.pickup_date}T${g.pickup_from}+03:00`).getTime();   // teslimden en az 2 saat önce
 };
+const cancelLate = o => o.status === 'bekliyor' && !canCancel(o) && o.bags.pickup_date >= todayTR();
 const orderDone = o => o.status !== 'bekliyor' || (o.bags.pickup_date < todayTR() || (o.bags.pickup_date === todayTR() && nowTR() > hm(o.bags.pickup_to)));
 function impact() {
   const got = myOrders.filter(o => o.status === 'teslim');
@@ -764,7 +765,7 @@ function orderCard(o) {
   else if (o.status === 'iptal') foot = '<span class="badge off">İptal edildi · iade edilecek</span>';
   else if (o.status === 'gelmedi' || !live) foot = '<span class="badge off">Teslim alınmadı</span>';
   else foot = `<span class="muted">Kodu mekâna göstermek için dokun</span><div class="codebox">${esc(o.code)}</div>`
-    + (canCancel(o) ? `<div><button class="btn small sec" data-cancel="${o.id}" type="button">Siparişi iptal et</button></div>` : '');
+    + (canCancel(o) ? `<div><button class="btn small sec" data-cancel="${o.id}" type="button">Siparişi iptal et</button></div>` : cancelLate(o) ? '<p class="muted">İptal süresi geçti: sipariş, teslim saatinden en az 2 saat önce iptal edilebilir.</p>' : '');
   return `<div class="order" ${live ? `data-oid="${o.id}" style="cursor:pointer"` : ''}><b>${esc(p.businesses.name)}</b>
     <span class="muted">${o.qty}× ${esc(p.title)} · ${money(o.total)} ₺</span><span class="muted">${when}</span>${foot}</div>`;
 }
