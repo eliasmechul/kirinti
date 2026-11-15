@@ -395,6 +395,14 @@ function sheet(html) {
 }
 function hideSheet() { $('#sheet').hidden = true; }
 function hidePage() { if (dmap) { dmap.remove(); dmap = null; } mapToken++; $('#page').hidden = true; }
+// Eigene Bestätigung statt window.confirm: eingebettete Browser (z. B. App-Ansichten) unterdrücken confirm() und der Knopf tat dann nichts
+function ask(msg, yes = 'Evet', no = 'Vazgeç') {
+  return new Promise(res => {
+    sheet(`<h3 style="text-align:center">${esc(msg)}</h3><button class="btn" id="askY" type="button">${esc((window.T || String)(yes))}</button><button class="btn sec" id="askN" type="button">${esc((window.T || String)(no))}</button>`);
+    let done = false; const fin = v => { if (done) return; done = true; closeSheet(); res(v); };
+    $('#askY').onclick = () => fin(true); $('#askN').onclick = () => fin(false);
+  });
+}
 function closeSheet() { if (!$('#sheet').hidden) { hideSheet(); popOverlay(); } }
 function closePage() { if (!$('#page').hidden) { hidePage(); popOverlay(); } }
 function openPage() { if ($('#page').hidden) { $('#page').hidden = false; pushOverlay(); } }
@@ -478,7 +486,7 @@ function savedCardHtml() {
 }
 async function delCard() {
   const T = window.T || String;
-  if (!confirm(T('Kayıtlı kartın iyzico\'dan silinsin mi? Sonraki ödemede kartını yeniden girmen gerekir.'))) return;
+  if (!await ask(T('Kayıtlı kartın iyzico\'dan silinsin mi? Sonraki ödemede kartını yeniden girmen gerekir.'))) return;
   const { data, error } = await sb.functions.invoke('pay-card', { body: {} });
   if (error || !data || data.error) return toast(T('Kart silinemedi, tekrar dene'));
   savedCard = null; renderAuthBars(); toast(T('Kayıtlı kart silindi'));
@@ -772,12 +780,12 @@ function renderOrders() {
 async function cancelOrder(id) {
   const ord = myOrders.find(x => x.id === id);
   if (ord && ord.payment_method === 'mekanda') {
-    if (!confirm((window.T || String)('Siparişi iptal etmek istiyor musun?'))) return;
+    if (!await ask((window.T || String)('Siparişi iptal etmek istiyor musun?'))) return;
     const { error: ce } = await sb.rpc('cancel_order', { p_order_id: id });
     if (ce) return toast(ce.message || 'İptal edilemedi');
     toast('Sipariş iptal edildi'); return Promise.all([loadMyOrders(), loadBags()]);
   }
-  if (!confirm((window.T || String)('Siparişi iptal etmek istiyor musun? Ödemen iade edilir.'))) return;
+  if (!await ask((window.T || String)('Siparişi iptal etmek istiyor musun? Ödemen iade edilir.'))) return;
   const { data, error } = await sb.functions.invoke('pay-cancel', { body: { order_id: id } });
   if (error || !data || data.error) {
     const e = data && data.error;
@@ -991,12 +999,12 @@ $('#tab-profil').addEventListener('click', async e => {
     if (!error) renderBiz(); else toast(error.message);
   }
   if (e.target.dataset.tdel) {
-    if (!confirm((window.T || String)('Tekrarlayan paketi silmek istiyor musun? Bugünkü paket etkilenmez.'))) return;
+    if (!await ask((window.T || String)('Tekrarlayan paketi silmek istiyor musun? Bugünkü paket etkilenmez.'))) return;
     const { error } = await sb.from('bag_templates').delete().eq('id', e.target.dataset.tdel);
     if (!error) renderBiz(); else toast(error.message);
   }
   if (del) {
-    if (!confirm((window.T || String)('Bu paketi kaldırmak istiyor musun?'))) return;
+    if (!await ask((window.T || String)('Bu paketi kaldırmak istiyor musun?'))) return;
     const { error } = await sb.from('bags').delete().eq('id', del);
     if (error) toast('Siparişi olan paket silinemez'); else { renderBiz(); loadBags(); }
   }
