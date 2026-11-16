@@ -912,7 +912,7 @@ async function renderBiz() {
   ]);
   const { data: pay } = await sb.rpc('my_payout_summary', { p_business: myBiz.id });   // hakediş özeti (tablo yoksa null)
   const t = st || {};
-  const tm = terms || { commission_rate: 0.30, promo_rate: 0.20, promo_until: null };
+  const tm = terms || { commission_rate: 0.25, promo_rate: 0.10, promo_until: null };
   const todayIso = todayTR(), promoOn = !!tm.promo_until && tm.promo_until >= todayIso;
   const pctNow = Math.round((promoOn ? tm.promo_rate : tm.commission_rate) * 100), pctStd = Math.round(tm.commission_rate * 100);
   const promoEnd = promoOn ? tm.promo_until.split('-').reverse().join('.') : '';
