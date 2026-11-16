@@ -912,11 +912,16 @@ async function renderBiz() {
   ]);
   const { data: pay } = await sb.rpc('my_payout_summary', { p_business: myBiz.id });   // hakediş özeti (tablo yoksa null)
   const t = st || {};
-  const tm = terms || { commission_rate: 0.25, promo_rate: 0.10, promo_until: null };
+  const tm = terms || { commission_rate: 0.25, promo_rate: 0, promo_until: null };
   const todayIso = todayTR(), promoOn = !!tm.promo_until && tm.promo_until >= todayIso;
-  const pctNow = Math.round((promoOn ? tm.promo_rate : tm.commission_rate) * 100), pctStd = Math.round(tm.commission_rate * 100);
+  const pctStd = Math.round(tm.commission_rate * 100);
+  const soldPk = (ords || []).filter(o => ['bekliyor', 'teslim'].includes(o.status)).reduce((n, o) => n + (o.qty || 1), 0);
   const promoEnd = promoOn ? tm.promo_until.split('-').reverse().join('.') : '';
-  const commNote = `Kazanç, %${pctNow} komisyon düşüldükten sonraki tutardır.` + (promoOn ? ` İlk 6 ay indirimli oran: ${promoEnd}'e kadar %${pctNow} (sonra %${pctStd}).` : '');
+  const commNote = promoOn
+    ? `Hoş geldin teklifi: ${promoEnd}'e kadar komisyon yok. İlk 10 paketin de komisyonsuz, sonra %${pctStd}.`
+    : soldPk < 10
+      ? `İlk 10 paketin komisyonsuz (${soldPk}/10 satıldı), sonra %${pctStd} komisyon düşülür.`
+      : `Kazanç, %${pctStd} komisyon düşüldükten sonraki tutardır.`;
   const tile = (v, l) => `<div><b>${v}</b><small>${l}</small></div>`;
   const live = (ords || []).filter(o => o.status === 'bekliyor'), past = (ords || []).filter(o => o.status !== 'bekliyor');
   root.innerHTML = `<p><b>${esc(myBiz.name)}</b> <span class="muted">· ${esc(myBiz.address)}</span></p>
