@@ -916,7 +916,7 @@ async function renderBiz() {
   const todayIso = todayTR(), promoOn = !!tm.promo_until && tm.promo_until >= todayIso;
   const pctNow = Math.round((promoOn ? tm.promo_rate : tm.commission_rate) * 100), pctStd = Math.round(tm.commission_rate * 100);
   const promoEnd = promoOn ? tm.promo_until.split('-').reverse().join('.') : '';
-  const commNote = `Kazanç, %${pctNow} komisyon düşüldükten sonraki tutardır.` + (promoOn ? ` İlk 3 ay indirimli oran: ${promoEnd}'e kadar %${pctNow} (sonra %${pctStd}).` : '');
+  const commNote = `Kazanç, %${pctNow} komisyon düşüldükten sonraki tutardır.` + (promoOn ? ` İlk 6 ay indirimli oran: ${promoEnd}'e kadar %${pctNow} (sonra %${pctStd}).` : '');
   const tile = (v, l) => `<div><b>${v}</b><small>${l}</small></div>`;
   const live = (ords || []).filter(o => o.status === 'bekliyor'), past = (ords || []).filter(o => o.status !== 'bekliyor');
   root.innerHTML = `<p><b>${esc(myBiz.name)}</b> <span class="muted">· ${esc(myBiz.address)}</span></p>
