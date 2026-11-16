@@ -912,7 +912,7 @@ async function renderBiz() {
   ]);
   const { data: pay } = await sb.rpc('my_payout_summary', { p_business: myBiz.id });   // hakediş özeti (tablo yoksa null)
   const t = st || {};
-  const tm = terms || { commission_rate: 0.25, promo_rate: 0, promo_until: null };
+  const tm = terms || { commission_rate: 0.10, promo_rate: 0, promo_until: null };
   const todayIso = todayTR(), promoOn = !!tm.promo_until && tm.promo_until >= todayIso;
   const pctStd = Math.round(tm.commission_rate * 100);
   const soldPk = (ords || []).filter(o => ['bekliyor', 'teslim'].includes(o.status)).reduce((n, o) => n + (o.qty || 1), 0);
