@@ -67,7 +67,7 @@ create or replace view public.payable_orders as
 select o.id, b.business_id,
   case when o.payment_method = 'kart' then coalesce(o.payout_amount, 0) else 0 end as card_net,
   case when o.payment_method = 'kart' then 0
-       else coalesce(o.commission_amount, round(o.total * coalesce(o.commission_rate, 0.10), 2)) end as cash_commission,
+       else coalesce(o.commission_amount, round(o.total * coalesce(o.commission_rate, 0.25), 2)) end as cash_commission,
   b.pickup_date
 from public.orders o join public.bags b on b.id = o.bag_id
 where o.status = 'teslim' and o.payment_status = 'odendi' and o.payout_id is null;
