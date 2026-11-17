@@ -526,7 +526,7 @@ async function tryRedeem() {
   const { data, error } = await sb.rpc('redeem_referral', { p_code: code });
   if (error) return;
   try { localStorage.removeItem('kirinti_ref'); } catch {}
-  if (data === 'ok') toast((window.T || String)('Davet kodun eklendi: ilk siparişini teslim alınca ikiniz de 30 ₺ kazanırsınız'));
+  if (data === 'ok') toast((window.T || String)('Davet kodun eklendi: ilk siparişini teslim alınca ikiniz de 100 ₺ kazanırsınız'));
   else if (data === 'gecersiz') toast((window.T || String)('Davet kodu geçersiz'));
   loadReferral();
 }
@@ -539,15 +539,15 @@ async function loadReferral() {
 function refHtml() {
   if (!refData) return '';
   const r = refData, T = window.T || String;
-  return `<div class="ref"><h3>${esc(T('Arkadaşını davet et, ikiniz de 30 ₺ kazanın'))} 🎁</h3>
-    <p class="muted">${esc(T('Arkadaşın kodunla kaydolup ilk siparişini teslim alınca ikinize de 30 ₺ kredi yüklenir. Kredi, kartlı ödemelerde otomatik düşer.'))}</p>
+  return `<div class="ref"><h3>${esc(T('Arkadaşını davet et, ikiniz de 100 ₺ kazanın'))} 🎁</h3>
+    <p class="muted">${esc(T('Arkadaşın kodunla kaydolup ilk siparişini teslim alınca ikinize de 100 ₺ kredi yüklenir. Kredi, kartlı ödemelerde otomatik düşer.'))}</p>
     <div class="refcode"><b>${esc(r.code)}</b><button class="btn small" data-shareref type="button">${esc(T('Davet linkini paylaş'))}</button></div>
     <small class="muted">${r.invited} ${esc(T('davet'))} · ${r.rewarded} ${esc(T('ödül'))} · ${esc(T('Kredin'))}: <b>${money(r.balance)} ₺</b></small></div>`;
 }
 async function shareRef() {
   if (!refData) return;
   const url = `https://kirinti-app.com/app/?ref=${refData.code}`;
-  const text = `Kırıntı ile akşam kalan yemekleri uygun fiyata kurtar. Kodum ${refData.code}: ikimiz de 30 ₺ kazanırız 🥐`;
+  const text = `Kırıntı ile akşam kalan yemekleri uygun fiyata kurtar. Kodum ${refData.code}: ikimiz de 100 ₺ kazanırız 🥐`;
   try { if (navigator.share) return await navigator.share({ title: 'Kırıntı', text, url }); } catch { return; }
   try { await navigator.clipboard.writeText(`${text} ${url}`); toast('Davet metni kopyalandı'); } catch { toast(url); }
 }
